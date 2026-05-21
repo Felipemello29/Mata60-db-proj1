@@ -1,13 +1,13 @@
 # Implementation Plan - Core DB (Marco 1)
 
-## Phase 1: Conceptual and Logical Modeling
+## Phase 1: Conceptual and Logical Modeling [checkpoint: 227a81a]
 - [x] Task: Create Conceptual Model (ER Diagram) in BrModelo using Peter Chen notation (3a6d97e)
     - [ ] Map all entities from minimundo (TB_*)
     - [ ] Map all relationships (RL_*) and cardinalities
 - [x] Task: Derive Relational Logical Model (938fa34)
     - [ ] Apply normalization (1NF, 2NF, 3NF)
     - [ ] Define Primary and Foreign Keys
-- [ ] Task: Conductor - User Manual Verification 'Conceptual and Logical Modeling' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Conceptual and Logical Modeling' (Protocol in workflow.md) (227a81a)
 
 ## Phase 2: Schema Implementation (Physical Design)
 - [ ] Task: Initialize PostgreSQL DDL Script
