@@ -23,7 +23,7 @@
 - [x] Task: Develop Data Generation Strategy (6066bef)
     - [x] Write SQL scripts to populate auxiliary tables (Instructors, Partners)
     - [x] Generate 5,000+ records for `TB_PARTICIPANTE` and `RL_INSCRICAO_HISTORICO`
-- [ ] Task: Verify Data Integrity and Volume
+- [x] Task: Verify Data Integrity and Volume (5b35b54)
     - [ ] Write queries to verify record counts and relationship consistency
 - [ ] Task: Conductor - User Manual Verification 'Data Population' (Protocol in workflow.md)
 
