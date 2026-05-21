@@ -19,13 +19,13 @@
     - [ ] Add `CHECK` constraints and `DEFAULT` values
 - [x] Task: Conductor - User Manual Verification 'Schema Implementation' (Protocol in workflow.md) (7f46f37)
 
-## Phase 3: Data Population and Sampling
+## Phase 3: Data Population and Sampling [checkpoint: 995d2cb]
 - [x] Task: Develop Data Generation Strategy (6066bef)
     - [x] Write SQL scripts to populate auxiliary tables (Instructors, Partners)
     - [x] Generate 5,000+ records for `TB_PARTICIPANTE` and `RL_INSCRICAO_HISTORICO`
 - [x] Task: Verify Data Integrity and Volume (5b35b54)
     - [ ] Write queries to verify record counts and relationship consistency
-- [ ] Task: Conductor - User Manual Verification 'Data Population' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Data Population' (Protocol in workflow.md) (995d2cb)
 
 ## Phase 4: Query Implementation and Optimization
 - [ ] Task: Implement Intermediate Queries (10)
