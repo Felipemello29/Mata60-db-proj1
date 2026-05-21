@@ -14,7 +14,7 @@
     - [ ] Write schema verification tests (queries to check table existence/constraints)
     - [ ] Implement `TB_` base tables with DDL
     - [ ] Implement `RL_` associative tables with DDL
-- [ ] Task: Implement Business Rules and Constraints
+- [x] Task: Implement Business Rules and Constraints (102f033)
     - [ ] Write failing tests for integrity constraints (e.g., invalid grades)
     - [ ] Add `CHECK` constraints and `DEFAULT` values
 - [ ] Task: Conductor - User Manual Verification 'Schema Implementation' (Protocol in workflow.md)
