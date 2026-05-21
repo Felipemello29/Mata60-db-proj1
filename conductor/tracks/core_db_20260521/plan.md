@@ -28,7 +28,7 @@
 - [x] Task: Conductor - User Manual Verification 'Data Population' (Protocol in workflow.md) (995d2cb)
 
 ## Phase 4: Query Implementation and Optimization
-- [ ] Task: Implement Intermediate Queries (10)
+- [x] Task: Implement Intermediate Queries (10) (b0bd9a7)
     - [ ] Write tests for 10 queries involving 3+ tables and JOIN/GROUP BY/COUNT
     - [ ] Implement queries and verify results
 - [ ] Task: Implement Advanced Queries (20)
