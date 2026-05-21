@@ -4,7 +4,7 @@
 - [x] Task: Create Conceptual Model (ER Diagram) in BrModelo using Peter Chen notation (3a6d97e)
     - [ ] Map all entities from minimundo (TB_*)
     - [ ] Map all relationships (RL_*) and cardinalities
-- [ ] Task: Derive Relational Logical Model
+- [x] Task: Derive Relational Logical Model (938fa34)
     - [ ] Apply normalization (1NF, 2NF, 3NF)
     - [ ] Define Primary and Foreign Keys
 - [ ] Task: Conductor - User Manual Verification 'Conceptual and Logical Modeling' (Protocol in workflow.md)
