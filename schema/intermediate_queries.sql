@@ -1,70 +1,124 @@
 -- IC Extension Management - Intermediate Queries (10)
--- Requirements: 3+ tables, JOIN, GROUP BY, aggregation
+-- Requirements: RF1-RF7 (Activity management, enrollment, certificates, feedback, partnerships, grades, projects)
+-- Criteria: ≥3 distinct base tables, ≥2 of: JOIN, GROUP BY, WINDOW functions, COUNT
 
--- 1. List all participants enrolled in activities belonging to a specific project
-SELECT DISTINCT p.DS_NOME_PARTICIPANTE, proj.DS_NOME_PROJETO
+-- [RF2] Query 1: Count enrollments per participant in activities of project 1
+-- Requisito: RF2 - Enrollment, attendance control, participation history
+-- Tabelas: TB_PARTICIPANTE, RL_INSCRICAO_HISTORICO, TB_ATIVIDADE, TB_PROJETO_EXTENSAO
+-- Funções: JOIN, GROUP BY, COUNT
+SELECT p.DS_NOME_PARTICIPANTE,
+       proj.DS_NOME_PROJETO,
+       COUNT(i.ID_INSCRICAO) AS total_inscricoes
 FROM TB_PARTICIPANTE p
 JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
 JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
 JOIN TB_PROJETO_EXTENSAO proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
-WHERE proj.ID_PROJETO = 1;
+WHERE proj.ID_PROJETO = 1
+GROUP BY p.DS_NOME_PARTICIPANTE, proj.DS_NOME_PROJETO;
 
--- 2. Count the number of activities per project
-SELECT proj.DS_NOME_PROJETO, COUNT(a.ID_ATIVIDADE) as total_atividades
+-- [RF1] Query 2: Count the number of activities per project with coordinator name
+-- Requisito: RF1 - Manage extension activities (dates, speakers, content)
+-- Tabelas: TB_PROJETO_EXTENSAO, TB_ATIVIDADE, TB_INSTRUTOR
+-- Funções: JOIN, GROUP BY, COUNT
+SELECT proj.DS_NOME_PROJETO,
+       inst.DS_NOME_INSTRUTOR AS coordenador,
+       COUNT(a.ID_ATIVIDADE) AS total_atividades
 FROM TB_PROJETO_EXTENSAO proj
 LEFT JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
-GROUP BY proj.DS_NOME_PROJETO;
+JOIN TB_INSTRUTOR inst ON proj.ID_INSTR_COORDENADOR = inst.ID_INSTRUTOR
+GROUP BY proj.DS_NOME_PROJETO, inst.DS_NOME_INSTRUTOR;
 
--- 3. List instructors and the total workload they have assigned across all activities
-SELECT inst.DS_NOME_INSTRUTOR, SUM(alloc.VL_CARGA_HORARIA) as total_horas
+-- [RF1] Query 3: List instructors and total workload with activity context
+-- Requisito: RF1 - Manage extension activities (dates, speakers, content)
+-- Tabelas: TB_INSTRUTOR, RL_ALOCACAO_INSTRUTOR, TB_ATIVIDADE
+-- Funções: JOIN, GROUP BY, SUM, COUNT
+SELECT inst.DS_NOME_INSTRUTOR,
+       COUNT(a.ID_ATIVIDADE) AS total_atividades,
+       SUM(alloc.VL_CARGA_HORARIA) AS total_horas
 FROM TB_INSTRUTOR inst
 JOIN RL_ALOCACAO_INSTRUTOR alloc ON inst.ID_INSTRUTOR = alloc.ID_INSTRUTOR
+JOIN TB_ATIVIDADE a ON alloc.ID_ATIVIDADE = a.ID_ATIVIDADE
 GROUP BY inst.DS_NOME_INSTRUTOR;
 
--- 4. List partners and the total amount they have contributed to activities
-SELECT part.DS_NOME_ORGANIZACAO, SUM(pat.VL_APORTE) as total_patrocinio
+-- [RF5] Query 4: List partners, total contributions, and sponsored activities
+-- Requisito: RF5 - Partnership management, impact/participation reports
+-- Tabelas: TB_PARCEIRO, RL_PATROCINIO_EVENTO, TB_ATIVIDADE
+-- Funções: JOIN, GROUP BY, SUM, COUNT
+SELECT part.DS_NOME_ORGANIZACAO,
+       COUNT(a.ID_ATIVIDADE) AS total_atividades_patrocinadas,
+       SUM(pat.VL_APORTE) AS total_patrocinio
 FROM TB_PARCEIRO part
 JOIN RL_PATROCINIO_EVENTO pat ON part.ID_PARCEIRO = pat.ID_PARCEIRO
+JOIN TB_ATIVIDADE a ON pat.ID_ATIVIDADE = a.ID_ATIVIDADE
 GROUP BY part.DS_NOME_ORGANIZACAO;
 
--- 5. List participants who have attended (ST_PRESENCA = 'PRESENTE') at least 2 activities
-SELECT p.DS_NOME_PARTICIPANTE, COUNT(i.ID_ATIVIDADE) as total_presencas
+-- [RF2] Query 5: Participants attending ≥2 activities, showing activity names
+-- Requisito: RF2 - Enrollment, attendance control, participation history
+-- Tabelas: TB_PARTICIPANTE, RL_INSCRICAO_HISTORICO, TB_ATIVIDADE
+-- Funções: JOIN, GROUP BY, COUNT, HAVING
+SELECT p.DS_NOME_PARTICIPANTE,
+       COUNT(a.ID_ATIVIDADE) AS total_presencas
 FROM TB_PARTICIPANTE p
 JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
+JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
 WHERE i.ST_PRESENCA = 'PRESENTE'
 GROUP BY p.DS_NOME_PARTICIPANTE
-HAVING COUNT(i.ID_ATIVIDADE) >= 2;
+HAVING COUNT(a.ID_ATIVIDADE) >= 2;
 
--- 6. Calculate the average grade per activity, only for activities with more than 5 enrollments
-SELECT a.DS_TITULO_ATIVIDADE, AVG(i.VL_NOTA_AVALIACAO) as media_nota
+-- [RF6] Query 6: Average grade per activity with project context
+-- Requisito: RF6 - Grade control for extension courses
+-- Tabelas: TB_ATIVIDADE, RL_INSCRICAO_HISTORICO, TB_PROJETO_EXTENSAO
+-- Funções: JOIN, GROUP BY, AVG, COUNT
+SELECT a.DS_TITULO_ATIVIDADE,
+       proj.DS_NOME_PROJETO,
+       AVG(i.VL_NOTA_AVALIACAO) AS media_nota,
+       COUNT(i.ID_INSCRICAO) AS total_inscricoes
 FROM TB_ATIVIDADE a
 JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
-GROUP BY a.DS_TITULO_ATIVIDADE
+JOIN TB_PROJETO_EXTENSAO proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
+GROUP BY a.DS_TITULO_ATIVIDADE, proj.DS_NOME_PROJETO
 HAVING COUNT(i.ID_INSCRICAO) > 5;
 
--- 7. List activities coordinates by projects of a specific instructor (as coordinator)
-SELECT a.DS_TITULO_ATIVIDADE, proj.DS_NOME_PROJETO, inst.DS_NOME_INSTRUTOR
+-- [RF7] Query 7: Count activities coordinated per instructor
+-- Requisito: RF7 - Extension project management (members, coordinators)
+-- Tabelas: TB_ATIVIDADE, TB_PROJETO_EXTENSAO, TB_INSTRUTOR
+-- Funções: JOIN, GROUP BY, COUNT
+SELECT inst.DS_NOME_INSTRUTOR,
+       COUNT(a.ID_ATIVIDADE) AS total_atividades_coordenadas
 FROM TB_ATIVIDADE a
 JOIN TB_PROJETO_EXTENSAO proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
 JOIN TB_INSTRUTOR inst ON proj.ID_INSTR_COORDENADOR = inst.ID_INSTRUTOR
-WHERE inst.ID_INSTRUTOR = 5;
+GROUP BY inst.DS_NOME_INSTRUTOR;
 
--- 8. Count certificates issued per activity type (grouped by activity title prefix or similar, here just activity)
-SELECT a.DS_TITULO_ATIVIDADE, COUNT(cert.ID_CERTIFICADO) as total_certificados
+-- [RF3] Query 8: Count certificates issued per activity
+-- Requisito: RF3 - Automatic certificate issuance after activity completion
+-- Tabelas: TB_ATIVIDADE, RL_INSCRICAO_HISTORICO, TB_EMISSAO_CERTIFICADO
+-- Funções: JOIN, GROUP BY, COUNT
+SELECT a.DS_TITULO_ATIVIDADE, COUNT(cert.ID_CERTIFICADO) AS total_certificados
 FROM TB_ATIVIDADE a
 JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
 JOIN TB_EMISSAO_CERTIFICADO cert ON i.ID_INSCRICAO = cert.ID_INSCRICAO
 GROUP BY a.DS_TITULO_ATIVIDADE;
 
--- 9. List participants and their feedback (score and comment) for a specific activity
-SELECT p.DS_NOME_PARTICIPANTE, f.VL_NOTA_SATISFACAO, f.DS_COMENTARIO_ABERTO
+-- [RF4] Query 9: Count feedbacks and average satisfaction per participant
+-- Requisito: RF4 - Participant feedback registration
+-- Tabelas: TB_PARTICIPANTE, RL_INSCRICAO_HISTORICO, TB_REGISTRO_FEEDBACK
+-- Funções: JOIN, GROUP BY, COUNT, AVG
+SELECT p.DS_NOME_PARTICIPANTE,
+       COUNT(f.ID_FEEDBACK) AS total_feedbacks,
+       AVG(f.VL_NOTA_SATISFACAO) AS media_satisfacao
 FROM TB_PARTICIPANTE p
 JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
 JOIN TB_REGISTRO_FEEDBACK f ON i.ID_INSCRICAO = f.ID_INSCRICAO
-WHERE i.ID_ATIVIDADE = 10;
+GROUP BY p.DS_NOME_PARTICIPANTE;
 
--- 10. List projects and the total number of members (bolsistas and voluntários)
-SELECT proj.DS_NOME_PROJETO, COUNT(mem.ID_PARTICIPANTE) as total_membros
+-- [RF7] Query 10: List projects and total members with participant names
+-- Requisito: RF7 - Extension project management (members, coordinators)
+-- Tabelas: TB_PROJETO_EXTENSAO, RL_MEMBRO_PROJETO, TB_PARTICIPANTE
+-- Funções: JOIN, GROUP BY, COUNT
+SELECT proj.DS_NOME_PROJETO,
+       COUNT(mem.ID_PARTICIPANTE) AS total_membros
 FROM TB_PROJETO_EXTENSAO proj
 JOIN RL_MEMBRO_PROJETO mem ON proj.ID_PROJETO = mem.ID_PROJETO
+JOIN TB_PARTICIPANTE p ON mem.ID_PARTICIPANTE = p.ID_PARTICIPANTE
 GROUP BY proj.DS_NOME_PROJETO;
