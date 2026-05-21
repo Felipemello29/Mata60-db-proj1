@@ -20,9 +20,9 @@
 - [x] Task: Conductor - User Manual Verification 'Schema Implementation' (Protocol in workflow.md) (7f46f37)
 
 ## Phase 3: Data Population and Sampling
-- [x] Task: Develop Data Generation Strategy (6465843)
-    - [ ] Write SQL scripts to populate auxiliary tables (Instructors, Partners)
-    - [ ] Generate 5,000+ records for `TB_PARTICIPANTE` and `RL_INSCRICAO_HISTORICO`
+- [x] Task: Develop Data Generation Strategy (6066bef)
+    - [x] Write SQL scripts to populate auxiliary tables (Instructors, Partners)
+    - [x] Generate 5,000+ records for `TB_PARTICIPANTE` and `RL_INSCRICAO_HISTORICO`
 - [ ] Task: Verify Data Integrity and Volume
     - [ ] Write queries to verify record counts and relationship consistency
 - [ ] Task: Conductor - User Manual Verification 'Data Population' (Protocol in workflow.md)
