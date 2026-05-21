@@ -31,7 +31,7 @@
 - [x] Task: Implement Intermediate Queries (10) (b0bd9a7)
     - [ ] Write tests for 10 queries involving 3+ tables and JOIN/GROUP BY/COUNT
     - [ ] Implement queries and verify results
-- [ ] Task: Implement Advanced Queries (20)
+- [x] Task: Implement Advanced Queries (20) (7fbc5b7)
     - [ ] Write tests for 20 queries involving 3+ tables and Sub-queries/Window functions
     - [ ] Implement queries and verify results
 - [ ] Task: Performance Analysis and Indexing
