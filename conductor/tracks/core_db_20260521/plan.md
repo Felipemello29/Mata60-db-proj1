@@ -34,7 +34,7 @@
 - [x] Task: Implement Advanced Queries (20) (7fbc5b7)
     - [ ] Write tests for 20 queries involving 3+ tables and Sub-queries/Window functions
     - [ ] Implement queries and verify results
-- [ ] Task: Performance Analysis and Indexing
+- [x] Task: Performance Analysis and Indexing (2179878)
     - [ ] Establish baseline execution times (20 executions each)
     - [ ] Implement indexing plans (CREATE INDEX)
     - [ ] Measure speedup and document results
