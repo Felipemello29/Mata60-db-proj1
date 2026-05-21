@@ -1,7 +1,7 @@
 # Implementation Plan - Core DB (Marco 1)
 
 ## Phase 1: Conceptual and Logical Modeling
-- [ ] Task: Create Conceptual Model (ER Diagram) in BrModelo using Peter Chen notation
+- [x] Task: Create Conceptual Model (ER Diagram) in BrModelo using Peter Chen notation (3a6d97e)
     - [ ] Map all entities from minimundo (TB_*)
     - [ ] Map all relationships (RL_*) and cardinalities
 - [ ] Task: Derive Relational Logical Model
