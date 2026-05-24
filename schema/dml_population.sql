@@ -70,3 +70,31 @@ SELECT
     CASE WHEN random() > 0.5 THEN 'Bolsista' ELSE 'Voluntário' END
 FROM generate_series(1, 300) s(i)
 ON CONFLICT DO NOTHING;
+
+-- 5. Certificates and Feedback (populated for non-empty query results)
+
+-- TB_EMISSAO_CERTIFICADO: one per PRESENTE enrollment (~8,800 records)
+INSERT INTO TB_EMISSAO_CERTIFICADO (ID_INSCRICAO, DT_EMISSAO, CD_AUTENTICIDADE)
+SELECT 
+    i.ID_INSCRICAO,
+    a.DT_REALIZACAO + INTERVAL '1 day',
+    'AUTH-' || UPPER(SUBSTR(MD5(random()::text || i.ID_INSCRICAO::text), 1, 12))
+FROM RL_INSCRICAO_HISTORICO i
+JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
+WHERE i.ST_PRESENCA = 'PRESENTE'
+ON CONFLICT DO NOTHING;
+
+-- TB_REGISTRO_FEEDBACK: one per PRESENTE enrollment (~8,800 records)
+INSERT INTO TB_REGISTRO_FEEDBACK (ID_INSCRICAO, VL_NOTA_SATISFACAO, DS_COMENTARIO_ABERTO)
+SELECT 
+    i.ID_INSCRICAO,
+    (random() * 4 + 1)::int,
+    CASE 
+        WHEN random() < 0.3 THEN 'Excelente atividade!'
+        WHEN random() < 0.6 THEN 'Muito bom, recomendo.'
+        WHEN random() < 0.8 THEN 'Atividade razoável, poderia melhorar.'
+        ELSE NULL
+    END
+FROM RL_INSCRICAO_HISTORICO i
+WHERE i.ST_PRESENCA = 'PRESENTE'
+ON CONFLICT DO NOTHING;
