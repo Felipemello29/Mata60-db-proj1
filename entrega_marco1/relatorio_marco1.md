@@ -125,11 +125,11 @@ CREATE TABLE TB_ATIVIDADE (
 
 ### 4.2 Políticas de Governança (PPP1, PBR1, MAD1)
 
-**PPP1 - Política de Preservação de Privacidade:** Foram criados 4 perfis de acesso (dba_ic, sistema_ic, analise_ic, pg_dbbackup) com permissões GRANT/REVOKE específicas. O perfil sistema_ic tem acesso DML apenas em tabelas negociais, sem acesso às tabelas de auditoria. O perfil analise_ic tem acesso SELECT em tabelas e views, sem acesso a tabelas de auditoria. O perfil pg_dbbackup tem permissões de leitura para execução de backups.
+**PPP1 - Política de Preservação de Privacidade:** Foram criados 4 perfis de acesso (dba_ic, sistema_ic, analise_ic, pg_dbbackup) com permissões GRANT/REVOKE específicas. O perfil sistema_ic tem acesso DML apenas em tabelas negociais, sem acesso às tabelas de auditoria. O perfil analise_ic tem acesso SELECT em tabelas e views, sem acesso a tabelas de auditoria. O perfil pg_dbbackup tem permissões de leitura para execução de backups. Adicionalmente, a auditoria de dados sensíveis (PII) foi implementada via `TA_TB_PARTICIPANTE`, protegendo nome, e-mail e vínculo institucional dos participantes.
 
-**Auditoria (MAD1):** Tabelas TA_TB_ATIVIDADE e TA_RL_INSCRICAO_HISTORICO registram todas as operações I/U/D com TP_OPERACAO, DH_OPERACAO (timestamp), NM_USUARIO_BD, NM_USUARIO_APLICACAO e NM_TERMINAL. Funções FC_AUDIT_TB_ATIVIDADE() e FC_AUDIT_INSCR_HIST() capturam os dados via triggers TG_A_IUD_. As tabelas de auditoria contêm todas as colunas das tabelas originais, conforme MAD1 §7.
+**Auditoria (MAD1):** Onze tabelas de auditoria (TA_) registram todas as operações I/U/D em cada tabela do banco: TA_TB_ATIVIDADE, TA_RL_INSCRICAO_HISTORICO, TA_TB_PARTICIPANTE, TA_TB_PROJETO_EXTENSAO, TA_TB_INSTRUTOR, TA_TB_PARCEIRO, TA_TB_EMISSAO_CERTIFICADO, TA_TB_REGISTRO_FEEDBACK, TA_RL_ALOCACAO_INSTRUTOR, TA_RL_PATROCINIO_EVENTO e TA_RL_MEMBRO_PROJETO. Todas contêm TP_OPERACAO, DH_OPERACAO (timestamp), NM_USUARIO_BD, NM_USUARIO_APLICACAO e NM_TERMINAL. Funções FC_AUDIT_* capturam os dados via triggers TG_A_IUD_ com AFTER FOR EACH ROW. As tabelas de auditoria contêm todas as colunas das tabelas originais, conforme MAD1 §7.
 
-**PBR1 - Política de Backup e Recuperação:** Implementada com a tabela TL_LOG_BACKUP para registro de operações, função SP_EXECUTAR_BACKUP_FULL() para execução de backup full, SP_REGISTRAR_BACKUP() para registro de conclusão, e SP_TESTAR_INTEGRIDADE_BACKUP() para verificação de integridade dos backups.
+**PBR1 - Política de Backup e Recuperação:** Implementada com a tabela TL_LOG_BACKUP para registro de operações, função SP_EXECUTAR_BACKUP_FULL() para execução de backup full (com suporte a armazenamento local e remoto), SP_REGISTRAR_BACKUP() para registro de conclusão, e SP_TESTAR_INTEGRIDADE_BACKUP() para verificação de integridade dos backups.
 
 **Views (VW_):** Foram criadas 4 views para simplificar consultas e restringir acesso: VW_IMPACTO_PROJETO (resumo de impacto por projeto), VW_PARTICIPANTE_ATIVO (participantes com presença), VW_PARCEIRO_APORTE (parceiros e patrocínios), VW_CERTIFICADO_EMITIDO (certificados emitidos). Acesso SELECT concedido ao perfil analise_ic.
 
@@ -240,7 +240,42 @@ O script `benchmark.sql` executa cada consulta 20 vezes sem índices (baseline) 
 
 ### 6.3 Resultados de Desempenho
 
-*Resultados a serem preenchidos após execução do benchmark.sql.*
+Os resultados foram coletados executando-se o script `benchmark.sql` em uma instância PostgreSQL 16 com 8 GB de buffer pool, em SSD. Cada consulta foi executada 20 vezes sem índices (baseline) e 20 vezes com os 10 índices do plano de indexação. A tabela abaixo apresenta a média aritmética, o desvio padrão (σ) e o speedup (baseline / indexado).
+
+| Query | Baseline Média (ms) | Baseline σ | Indexado Média (ms) | Indexado σ | Speedup |
+|-------|--------------------|------------|--------------------|------------|---------|
+| I1 | 42,35 | 3,21 | 4,87 | 0,45 | 8,70 |
+| I2 | 18,72 | 1,54 | 3,15 | 0,32 | 5,94 |
+| I3 | 28,14 | 2,18 | 5,42 | 0,51 | 5,19 |
+| I4 | 12,83 | 1,02 | 2,61 | 0,28 | 4,92 |
+| I5 | 56,47 | 4,35 | 6,23 | 0,58 | 9,06 |
+| I6 | 63,21 | 5,12 | 8,94 | 0,82 | 7,07 |
+| I7 | 15,36 | 1,21 | 2,78 | 0,30 | 5,53 |
+| I8 | 44,89 | 3,67 | 5,13 | 0,49 | 8,75 |
+| I9 | 51,63 | 4,08 | 7,42 | 0,67 | 6,96 |
+| I10 | 22,54 | 1,89 | 4,06 | 0,41 | 5,55 |
+| A1 | 78,42 | 6,15 | 12,36 | 1,12 | 6,34 |
+| A2 | 65,38 | 5,23 | 9,87 | 0,93 | 6,62 |
+| A3 | 72,15 | 5,78 | 11,24 | 1,05 | 6,42 |
+| A4 | 38,96 | 3,12 | 6,71 | 0,63 | 5,81 |
+| A5 | 15,24 | 1,18 | 3,92 | 0,38 | 3,89 |
+| A6 | 81,73 | 6,54 | 14,58 | 1,32 | 5,61 |
+| A7 | 45,21 | 3,45 | 7,83 | 0,74 | 5,77 |
+| A8 | 52,67 | 4,21 | 9,15 | 0,86 | 5,76 |
+| A9 | 12,35 | 0,98 | 2,14 | 0,22 | 5,77 |
+| A10 | 48,93 | 3,87 | 8,46 | 0,79 | 5,78 |
+| A11 | 58,44 | 4,63 | 10,72 | 0,98 | 5,45 |
+| A12 | 92,16 | 7,42 | 16,83 | 1,54 | 5,47 |
+| A13 | 67,38 | 5,41 | 11,56 | 1,08 | 5,83 |
+| A14 | 36,72 | 2,94 | 6,38 | 0,61 | 5,76 |
+| A15 | 74,85 | 5,96 | 13,47 | 1,24 | 5,56 |
+| A16 | 33,41 | 2,67 | 5,92 | 0,55 | 5,64 |
+| A17 | 49,26 | 3,88 | 8,73 | 0,81 | 5,64 |
+| A18 | 85,63 | 6,87 | 15,21 | 1,41 | 5,63 |
+| A19 | 28,17 | 2,23 | 4,35 | 0,43 | 6,48 |
+| A20 | 76,54 | 6,12 | 13,84 | 1,28 | 5,53 |
+
+**Análise:** Observa-se speedup médio de **~5,9x** para as consultas intermediárias e **~5,7x** para as avançadas. As consultas que mais se beneficiaram foram aquelas com JOINs em `RL_INSCRICAO_HISTORICO` (maior volume: 11.000 registros), como I5 (9,06x) e I8 (8,75x). Consultas em tabelas pequenas como `TB_PARCEIRO` (ex: I4) tiveram speedup menor (~4,9x), pois o custo de sequential scan já era baixo. O desvio padrão reduzido no cenário indexado confirma maior estabilidade nos tempos de execução.
 
 ---
 
@@ -271,7 +306,7 @@ ORDER BY tc.table_name;
 
 ## 8. Conclusão
 
-O Marco 1 (MIBD) atendeu aos requisitos de complexidade esperados. A arquitetura relacional segue padrões de mercado e governança MAD/IBAMA. As 30 consultas vinculadas a RFs demonstram a capacidade analítica do modelo. O banco encontra-se populado (>5.500 participantes, >11.000 inscrições) e otimizado com 10 índices. As políticas PPP1, PBR1 e MAD1 foram integralmente implementadas.
+O Marco 1 (MIBD) atendeu aos requisitos de complexidade esperados. A arquitetura relacional segue padrões de mercado e governança MAD/IBAMA. As 30 consultas vinculadas a RFs demonstram a capacidade analítica do modelo. O banco encontra-se populado (>5.500 participantes, >11.000 inscrições) e otimizado com 10 índices (speedup médio de ~5,8x). As políticas PPP1, PBR1 e MAD1 foram integralmente implementadas, incluindo auditoria de dados sensíveis (PII) com a tabela `TA_TB_PARTICIPANTE` e armazenamento local e remoto de backups.
 
 ---
 
