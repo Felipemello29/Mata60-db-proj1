@@ -1,10 +1,10 @@
 # Sistema de Gestão de Extensão do IC: Projeto e Implantação de Banco de Dados
 
-**Márcio Andrade¹, Felipe Teixeira¹, Felipe Mello¹, Jaiana Santos¹, Arthur¹**
+**Márcio Andrade¹, Felipe Teixeira¹, Felipe Mello¹, Jaiana Santana¹, Arthur¹**
 
 ¹Instituto de Computação — Universidade Federal da Bahia (UFBA)
 Salvador — BA — Brasil
-{marcio.andrade, felipe.teixeira, felipe.mello, jaiana.santos, arthur}@ufba.br
+{marcio.andrade, felipe.teixeira, felipe.mello, jaiana.santana, arthur}@ufba.br
 
 ---
 
