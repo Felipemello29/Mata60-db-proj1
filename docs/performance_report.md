@@ -12,12 +12,11 @@ Melhoram o desempenho dos JOINs, fundamentais em quase todas as 30 queries:
 - `IDX_ATIVIDADE_PROJETO`: `TB_ATIVIDADE(ID_PROJ_VINCULADO)`
 - `IDX_INSCRICAO_PARTICIPANTE`: `RL_INSCRICAO_HISTORICO(ID_PARTICIPANTE)`
 - `IDX_INSCRICAO_ATIVIDADE`: `RL_INSCRICAO_HISTORICO(ID_ATIVIDADE)`
-- `IDX_CERTIFICADO_INSCRICAO`: `TB_EMISSAO_CERTIFICADO(ID_INSCRICAO)`
-- `IDX_FEEDBACK_INSCRICAO`: `TB_REGISTRO_FEEDBACK(ID_INSCRICAO)`
+- *(Nota: Os índices para `TB_EMISSAO_CERTIFICADO` e `TB_REGISTRO_FEEDBACK` são criados implicitamente de forma automática e otimizada pelas restrições `UNIQUE` de negócio que protegem as relações 1:1)*
 
 ### 1.2 Índices para Filtragem e Agrupamento
 Aceleram as consultas que filtram por status ou datas:
-- `IDX_PARTICIPANTE_EMAIL`: `TB_PARTICIPANTE(DS_EMAIL_CONTATO)`
+- `UK_PARTICIPANTE_EMAIL`: `TB_PARTICIPANTE(DS_EMAIL_CONTATO)` *(Criado implicitamente via constraint UNIQUE de Chave Natural)*
 - `IDX_INSCRICAO_PRESENCA`: `RL_INSCRICAO_HISTORICO(ST_PRESENCA)`
 - `IDX_ATIVIDADE_DATA`: `TB_ATIVIDADE(DT_REALIZACAO)`
 
