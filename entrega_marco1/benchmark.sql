@@ -151,7 +151,7 @@ BEGIN
         -- Query Int-5: Participants who attended >= 2 activities
         start_ts := clock_timestamp();
         FOR r IN
-            SELECT p.DS_NOME_PARTICIPANTE, COUNT(a.ID_ATIVIDADE) as total_presencas
+            SELECT p.DS_NOME_PARTICIPANTE, COUNT(a.ID_ATIVIDADE) as total_presencas, STRING_AGG(a.DS_TITULO_ATIVIDADE, ', ') as nomes_atividades
             FROM TB_PARTICIPANTE p
             JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
             JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
@@ -264,7 +264,7 @@ BEGIN
         -- Query Int-10: Project members with names
         start_ts := clock_timestamp();
         FOR r IN
-            SELECT proj.DS_NOME_PROJETO, COUNT(mem.ID_PARTICIPANTE) as total_membros
+            SELECT proj.DS_NOME_PROJETO, COUNT(mem.ID_PARTICIPANTE) as total_membros, STRING_AGG(p.DS_NOME_PARTICIPANTE, ', ') as nomes_participantes
             FROM TB_PROJETO_EXTENSAO proj
             JOIN RL_MEMBRO_PROJETO mem ON proj.ID_PROJETO = mem.ID_PROJETO
             JOIN TB_PARTICIPANTE p ON mem.ID_PARTICIPANTE = p.ID_PARTICIPANTE
@@ -527,7 +527,8 @@ BEGIN
             SELECT DATE_TRUNC('month', proj.DT_CRIACAO) as mes_criacao,
                 COUNT(DISTINCT proj.ID_PROJETO) as projetos_no_mes,
                 COUNT(DISTINCT i.ID_INSCRICAO) as total_inscricoes,
-                SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados
+                SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados,
+                COUNT(DISTINCT proj.ID_PROJETO) - COALESCE(LAG(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)), 0) as crescimento_mensal
             FROM TB_PROJETO_EXTENSAO proj
             JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
             JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
@@ -678,7 +679,7 @@ DECLARE
     r RECORD;
 BEGIN
     FOR run IN 1..20 LOOP
-        -- Query Adv-16: Activities by instructor specialty
+        -- Query Adv-16: Activities by instructor specialty (>= 2 activities), ordered
         start_ts := clock_timestamp();
         FOR r IN
             SELECT inst.DS_ESPECIALIDADE, COUNT(DISTINCT a.ID_ATIVIDADE) as total_atividades
@@ -688,9 +689,10 @@ BEGIN
             WHERE inst.DS_ESPECIALIDADE IN (
                 SELECT inst2.DS_ESPECIALIDADE FROM TB_INSTRUTOR inst2
                 JOIN RL_ALOCACAO_INSTRUTOR alloc2 ON inst2.ID_INSTRUTOR = alloc2.ID_INSTRUTOR
-                GROUP BY inst2.DS_ESPECIALIDADE HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) > 1
+                GROUP BY inst2.DS_ESPECIALIDADE HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) >= 2
             )
             GROUP BY inst.DS_ESPECIALIDADE
+            ORDER BY total_atividades DESC
         LOOP NULL; END LOOP;
         end_ts := clock_timestamp();
         INSERT INTO benchmark_results VALUES (26, 'advanced', run, 'baseline',
@@ -921,7 +923,7 @@ BEGIN
     FOR run IN 1..20 LOOP
         start_ts := clock_timestamp();
         FOR r IN
-            SELECT p.DS_NOME_PARTICIPANTE, COUNT(a.ID_ATIVIDADE) as total_presencas
+            SELECT p.DS_NOME_PARTICIPANTE, COUNT(a.ID_ATIVIDADE) as total_presencas, STRING_AGG(a.DS_TITULO_ATIVIDADE, ', ') as nomes_atividades
             FROM TB_PARTICIPANTE p
             JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
             JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
@@ -1029,7 +1031,7 @@ BEGIN
     FOR run IN 1..20 LOOP
         start_ts := clock_timestamp();
         FOR r IN
-            SELECT proj.DS_NOME_PROJETO, COUNT(mem.ID_PARTICIPANTE) as total_membros
+            SELECT proj.DS_NOME_PROJETO, COUNT(mem.ID_PARTICIPANTE) as total_membros, STRING_AGG(p.DS_NOME_PARTICIPANTE, ', ') as nomes_participantes
             FROM TB_PROJETO_EXTENSAO proj
             JOIN RL_MEMBRO_PROJETO mem ON proj.ID_PROJETO = mem.ID_PROJETO
             JOIN TB_PARTICIPANTE p ON mem.ID_PARTICIPANTE = p.ID_PARTICIPANTE
@@ -1282,7 +1284,8 @@ BEGIN
             SELECT DATE_TRUNC('month', proj.DT_CRIACAO) as mes_criacao,
                 COUNT(DISTINCT proj.ID_PROJETO) as projetos_no_mes,
                 COUNT(DISTINCT i.ID_INSCRICAO) as total_inscricoes,
-                SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados
+                SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados,
+                COUNT(DISTINCT proj.ID_PROJETO) - COALESCE(LAG(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)), 0) as crescimento_mensal
             FROM TB_PROJETO_EXTENSAO proj
             JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
             JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
@@ -1437,9 +1440,10 @@ BEGIN
             WHERE inst.DS_ESPECIALIDADE IN (
                 SELECT inst2.DS_ESPECIALIDADE FROM TB_INSTRUTOR inst2
                 JOIN RL_ALOCACAO_INSTRUTOR alloc2 ON inst2.ID_INSTRUTOR = alloc2.ID_INSTRUTOR
-                GROUP BY inst2.DS_ESPECIALIDADE HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) > 1
+                GROUP BY inst2.DS_ESPECIALIDADE HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) >= 2
             )
             GROUP BY inst.DS_ESPECIALIDADE
+            ORDER BY total_atividades DESC
         LOOP NULL; END LOOP;
         end_ts := clock_timestamp();
         INSERT INTO benchmark_results VALUES (26, 'advanced', run, 'indexed',

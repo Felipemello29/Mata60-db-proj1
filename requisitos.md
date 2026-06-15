@@ -61,7 +61,7 @@ Tipo de Backup: Full (completo).
 Artefatos: Bancos de dados, catálogo do banco de dados e configurações do SGBD.
 Temporalidade: Semanal.
 Armazenamento: Local e remoto (Drive, github, dropbox, etc.)
-Responsabilidades: Administrador de backup utilizando o usuário pg_dbbackup.
+Responsabilidades: Administrador de backup utilizando o usuário dbbackup_ic.
 Seção 2: Procedimentos de Teste
 Testes de Integridade: Diários, verificando logs de backup em busca de erros.
 Testes de Restauração: Mensais, em ambientes isolados de produção, com relatórios enviados à CGTI.

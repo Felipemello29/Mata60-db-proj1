@@ -31,8 +31,8 @@ END $$;
 -- Backup Role (Backup Operator)
 DO $$ 
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'pg_dbbackup') THEN
-    CREATE ROLE pg_dbbackup WITH LOGIN PASSWORD 'backup_password';
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'dbbackup_ic') THEN
+    CREATE ROLE dbbackup_ic WITH LOGIN PASSWORD 'backup_password';
   END IF;
 END $$;
 
@@ -60,8 +60,8 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO analise_ic;
 REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM analise_ic;
 
 -- Permissions for Backup
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO pg_dbbackup;
-REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM pg_dbbackup;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO dbbackup_ic;
+REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM dbbackup_ic;
 
 -- Restrict audit table access (MAD1 §7: only AD and DBA teams)
 
@@ -69,5 +69,5 @@ REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM pg_dbbackup;
 -- Set default privileges for future tables (Commented out for security)
 -- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sistema_ic;
 -- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analise_ic;
--- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pg_dbbackup;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO dbbackup_ic;
 -- NOTE: If uncommented, these defaults will automatically grant privileges to future audit tables in public schema.

@@ -157,7 +157,8 @@ SELECT
     DATE_TRUNC('month', proj.DT_CRIACAO) as mes_criacao,
     COUNT(DISTINCT proj.ID_PROJETO) as projetos_no_mes,
     COUNT(DISTINCT i.ID_INSCRICAO) as total_inscricoes,
-    SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados
+    SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados,
+    COUNT(DISTINCT proj.ID_PROJETO) - COALESCE(LAG(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)), 0) as crescimento_mensal
 FROM TB_PROJETO_EXTENSAO proj
 JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
 JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
@@ -242,10 +243,10 @@ WHERE p.ID_PARTICIPANTE IN (
     HAVING COUNT(DISTINCT i2.ID_ATIVIDADE) > 2
 );
 
--- [RF1] Query 16: Count activities by instructor specialty, bridged through TB_ATIVIDADE
+-- [RF1] Query 16: Count activities by instructor specialty (>= 2 activities), ordered by highest count
 -- Requisito: RF1 - Manage extension activities (dates, speakers, content)
 -- Tabelas: TB_INSTRUTOR, RL_ALOCACAO_INSTRUTOR, TB_ATIVIDADE
--- Funções: JOIN, GROUP BY, COUNT, SUB-QUERY
+-- Funções: JOIN, GROUP BY, COUNT, SUB-QUERY, ORDER BY
 SELECT inst.DS_ESPECIALIDADE, COUNT(DISTINCT a.ID_ATIVIDADE) as total_atividades
 FROM TB_INSTRUTOR inst
 JOIN RL_ALOCACAO_INSTRUTOR alloc ON inst.ID_INSTRUTOR = alloc.ID_INSTRUTOR
@@ -255,9 +256,10 @@ WHERE inst.DS_ESPECIALIDADE IN (
     FROM TB_INSTRUTOR inst2
     JOIN RL_ALOCACAO_INSTRUTOR alloc2 ON inst2.ID_INSTRUTOR = alloc2.ID_INSTRUTOR
     GROUP BY inst2.DS_ESPECIALIDADE
-    HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) > 1
+    HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) >= 2
 )
-GROUP BY inst.DS_ESPECIALIDADE;
+GROUP BY inst.DS_ESPECIALIDADE
+ORDER BY total_atividades DESC;
 
 -- [RF4] Query 17: Participant with lowest feedback score in a highly attended activity (>20 people)
 -- Requisito: RF4 - Participant feedback registration

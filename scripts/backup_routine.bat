@@ -7,11 +7,11 @@ REM Estratégias de Backup:
 REM Tipo: Full (completo).
 REM Artefatos: Bancos de dados, catálogo e configurações.
 REM Temporalidade: Semanal.
-REM Operador: pg_dbbackup
+REM Operador: dbbackup_ic
 REM ========================================================================
 
 set DB_NAME=banco_extensao_ic
-set DB_USER=pg_dbbackup
+set DB_USER=dbbackup_ic
 set BACKUP_DIR=C:\backups\db_ic
 set TIMESTAMP=%date:~6,4%%date:~3,2%%date:~0,2%_%time:~0,2%%time:~3,2%%time:~6,2%
 set TIMESTAMP=%TIMESTAMP: =0%

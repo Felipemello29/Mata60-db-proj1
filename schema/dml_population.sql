@@ -39,7 +39,8 @@ SELECT
     CASE WHEN random() > 0.2 THEN 'PRESENTE' ELSE 'AUSENTE' END,
     (random() * 10)::decimal(4,2)
 FROM generate_series(1, 5500) s(i), LATERAL (SELECT i as id) p
-CROSS JOIN generate_series(1, 2) g(j);
+CROSS JOIN generate_series(1, 2) g(j)
+ON CONFLICT DO NOTHING;
 
 -- 4. Other Relationships
 

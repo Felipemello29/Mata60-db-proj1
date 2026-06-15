@@ -618,8 +618,8 @@ END $$;
 -- Backup Role (Backup Operator)
 DO $$ 
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'pg_dbbackup') THEN
-    CREATE ROLE pg_dbbackup WITH LOGIN PASSWORD 'backup_password';
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'dbbackup_ic') THEN
+    CREATE ROLE dbbackup_ic WITH LOGIN PASSWORD 'backup_password';
   END IF;
 END $$;
 
@@ -647,9 +647,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO analise_ic;
 REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM analise_ic;
 
 -- Permissions for Backup
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO pg_dbbackup;
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO pg_dbbackup;
-REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM pg_dbbackup;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO dbbackup_ic;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO dbbackup_ic;
+REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM dbbackup_ic;
 
 -- Restrict audit table access (MAD1 §7: only AD and DBA teams)
 
@@ -657,7 +657,7 @@ REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM pg_dbbackup;
 -- Set default privileges for future tables (Commented out for security)
 -- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sistema_ic;
 -- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analise_ic;
--- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pg_dbbackup;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO dbbackup_ic;
 -- NOTE: If uncommented, these defaults will automatically grant privileges to future audit tables in public schema.
 
 -- IC Extension Management - Data Population Script
@@ -701,7 +701,8 @@ SELECT
     CASE WHEN random() > 0.2 THEN 'PRESENTE' ELSE 'AUSENTE' END,
     (random() * 10)::decimal(4,2)
 FROM generate_series(1, 5500) s(i), LATERAL (SELECT i as id) p
-CROSS JOIN generate_series(1, 2) g(j);
+CROSS JOIN generate_series(1, 2) g(j)
+ON CONFLICT DO NOTHING;
 
 -- 4. Other Relationships
 
@@ -843,7 +844,8 @@ GROUP BY part.DS_NOME_ORGANIZACAO;
 -- Tabelas: TB_PARTICIPANTE, RL_INSCRICAO_HISTORICO, TB_ATIVIDADE
 -- Funções: JOIN, GROUP BY, COUNT, HAVING
 SELECT p.DS_NOME_PARTICIPANTE,
-       COUNT(a.ID_ATIVIDADE) AS total_presencas
+       COUNT(a.ID_ATIVIDADE) AS total_presencas,
+       STRING_AGG(a.DS_TITULO_ATIVIDADE, ', ') AS nomes_atividades
 FROM TB_PARTICIPANTE p
 JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
 JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
@@ -903,7 +905,8 @@ GROUP BY p.DS_NOME_PARTICIPANTE;
 -- Tabelas: TB_PROJETO_EXTENSAO, RL_MEMBRO_PROJETO, TB_PARTICIPANTE
 -- Funções: JOIN, GROUP BY, COUNT
 SELECT proj.DS_NOME_PROJETO,
-       COUNT(mem.ID_PARTICIPANTE) AS total_membros
+       COUNT(mem.ID_PARTICIPANTE) AS total_membros,
+       STRING_AGG(p.DS_NOME_PARTICIPANTE, ', ') AS nomes_participantes
 FROM TB_PROJETO_EXTENSAO proj
 JOIN RL_MEMBRO_PROJETO mem ON proj.ID_PROJETO = mem.ID_PROJETO
 JOIN TB_PARTICIPANTE p ON mem.ID_PARTICIPANTE = p.ID_PARTICIPANTE
@@ -1068,7 +1071,8 @@ SELECT
     DATE_TRUNC('month', proj.DT_CRIACAO) as mes_criacao,
     COUNT(DISTINCT proj.ID_PROJETO) as projetos_no_mes,
     COUNT(DISTINCT i.ID_INSCRICAO) as total_inscricoes,
-    SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados
+    SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) as projetos_acumulados,
+    COUNT(DISTINCT proj.ID_PROJETO) - COALESCE(LAG(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)), 0) as crescimento_mensal
 FROM TB_PROJETO_EXTENSAO proj
 JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
 JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
@@ -1153,10 +1157,10 @@ WHERE p.ID_PARTICIPANTE IN (
     HAVING COUNT(DISTINCT i2.ID_ATIVIDADE) > 2
 );
 
--- [RF1] Query 16: Count activities by instructor specialty, bridged through TB_ATIVIDADE
+-- [RF1] Query 16: Count activities by instructor specialty (>= 2 activities), ordered by highest count
 -- Requisito: RF1 - Manage extension activities (dates, speakers, content)
 -- Tabelas: TB_INSTRUTOR, RL_ALOCACAO_INSTRUTOR, TB_ATIVIDADE
--- Funções: JOIN, GROUP BY, COUNT, SUB-QUERY
+-- Funções: JOIN, GROUP BY, COUNT, SUB-QUERY, ORDER BY
 SELECT inst.DS_ESPECIALIDADE, COUNT(DISTINCT a.ID_ATIVIDADE) as total_atividades
 FROM TB_INSTRUTOR inst
 JOIN RL_ALOCACAO_INSTRUTOR alloc ON inst.ID_INSTRUTOR = alloc.ID_INSTRUTOR
@@ -1166,9 +1170,10 @@ WHERE inst.DS_ESPECIALIDADE IN (
     FROM TB_INSTRUTOR inst2
     JOIN RL_ALOCACAO_INSTRUTOR alloc2 ON inst2.ID_INSTRUTOR = alloc2.ID_INSTRUTOR
     GROUP BY inst2.DS_ESPECIALIDADE
-    HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) > 1
+    HAVING COUNT(DISTINCT alloc2.ID_ATIVIDADE) >= 2
 )
-GROUP BY inst.DS_ESPECIALIDADE;
+GROUP BY inst.DS_ESPECIALIDADE
+ORDER BY total_atividades DESC;
 
 -- [RF4] Query 17: Participant with lowest feedback score in a highly attended activity (>20 people)
 -- Requisito: RF4 - Participant feedback registration
@@ -1322,8 +1327,8 @@ BEGIN
 
     -- Execute pg_dump via pg_read_file is not possible; this function documents the procedure
     -- Actual execution must be done via pg_dump command-line or pg_cron job:
-    -- Local: pg_dump -U pg_dbbackup -Fc -b -v -f <backup_file> ic_extensao
-    -- Remote: pg_dump -U pg_dbbackup -Fc -b -v -f <remote_file> ic_extensao
+    -- Local: pg_dump -U dbbackup_ic -Fc -b -v -f <backup_file> ic_extensao
+    -- Remote: pg_dump -U dbbackup_ic -Fc -b -v -f <remote_file> ic_extensao
     -- Cloud sync: gdrive upload <backup_file> (or rsync to remote storage)
 
     INSERT INTO TL_LOG_BACKUP (DS_ARQUIVO, DH_INICIO, ST_RESULTADO)
@@ -1380,8 +1385,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 5. Grant backup role extra permissions (beyond SELECT granted above)
-GRANT EXECUTE ON FUNCTION SP_EXECUTAR_BACKUP_FULL() TO pg_dbbackup;
-GRANT EXECUTE ON FUNCTION SP_REGISTRAR_BACKUP(VARCHAR, VARCHAR, TEXT) TO pg_dbbackup;
-GRANT EXECUTE ON FUNCTION SP_TESTAR_INTEGRIDADE_BACKUP() TO pg_dbbackup;
-GRANT ALL PRIVILEGES ON TL_LOG_BACKUP TO pg_dbbackup;
+GRANT EXECUTE ON FUNCTION SP_EXECUTAR_BACKUP_FULL() TO dbbackup_ic;
+GRANT EXECUTE ON FUNCTION SP_REGISTRAR_BACKUP(VARCHAR, VARCHAR, TEXT) TO dbbackup_ic;
+GRANT EXECUTE ON FUNCTION SP_TESTAR_INTEGRIDADE_BACKUP() TO dbbackup_ic;
+GRANT ALL PRIVILEGES ON TL_LOG_BACKUP TO dbbackup_ic;
 

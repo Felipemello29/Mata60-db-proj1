@@ -18,7 +18,7 @@ Este relatório descreve o desenvolvimento do banco de dados para o Sistema de G
 
 ## 1. Introdução
 
-A gestão das atividades de extensão universitária do Instituto de Computação, que incluem minicursos, workshops e eventos, carece de um sistema de informação otimizado para lidar com inscrições, emissão de certificados, controle de notas, parcerias e feedback. O objetivo deste projeto (Marco 1) é projetar e implementar o modelo relacional de banco de dados capaz de suportar esses processos negociais, respeitando os preceitos de Governança de Dados (MAD) e garantindo integridade e escalabilidade.
+A gestão das atividades de extensão universitária do Instituto de Computação, que incluem minicursos, workshops e eventos, carece de um sistema de informação otimizado para lidar com inscrições, emissão de certificados, controle de notas, parcerias e feedback. O objetivo deste projeto (Marco 2) é projetar e aprimorar a implementação do modelo relacional de banco de dados capaz de suportar esses processos negociais, respeitando os preceitos de Governança de Dados (MAD) e garantindo integridade e escalabilidade.
 
 ---
 
@@ -48,7 +48,7 @@ O banco de dados modela as seguintes entidades e seus relacionamentos:
 
 - **TB_PROJETO_EXTENSAO:** Projetos estruturantes. Atributos: ID_PROJETO (PK, SERIAL), DS_NOME_PROJETO, DT_CRIACAO, ID_INSTR_COORDENADOR (FK).
 - **TB_ATIVIDADE:** Eventos, minicursos e workshops. Atributos: ID_ATIVIDADE (PK, SERIAL), DS_TITULO_ATIVIDADE, DS_CONTEUDO_PROG, DT_REALIZACAO, ID_PROJ_VINCULADO (FK).
-- **TB_PARTICIPANTE:** Público atendido. Atributos: ID_PARTICIPANTE (PK, SERIAL), DS_NOME_PARTICIPANTE, DS_EMAIL_CONTATO, TP_VINCULO_INST.
+- **TB_PARTICIPANTE:** Público atendido. Atributos: ID_PARTICIPANTE (PK, SERIAL), DS_NOME_PARTICIPANTE, DS_EMAIL_CONTATO (UNIQUE), TP_VINCULO_INST.
 - **TB_INSTRUTOR:** Docentes e palestrantes. Atributos: ID_INSTRUTOR (PK, SERIAL), DS_NOME_INSTRUTOR, DS_ESPECIALIDADE.
 - **TB_PARCEIRO:** Empresas e ONGs. Atributos: ID_PARCEIRO (PK, SERIAL), DS_NOME_ORGANIZACAO, TP_PARCEIRO.
 - **TB_EMISSAO_CERTIFICADO:** Certificados. Atributos: ID_CERTIFICADO (PK, SERIAL), ID_INSCRICAO (FK, UNIQUE), DT_EMISSAO, CD_AUTENTICIDADE (UNIQUE).
@@ -56,7 +56,7 @@ O banco de dados modela as seguintes entidades e seus relacionamentos:
 
 **Entidades associativas:**
 
-- **RL_INSCRICAO_HISTORICO:** Relaciona PARTICIPANTE e ATIVIDADE com presença e nota.
+- **RL_INSCRICAO_HISTORICO:** Relaciona PARTICIPANTE e ATIVIDADE com presença e nota. Chave única composta para barrar matrículas duplicadas (`uk_inscricao_unica`).
 - **RL_ALOCACAO_INSTRUTOR:** Relaciona INSTRUTOR e ATIVIDADE com carga horária.
 - **RL_PATROCINIO_EVENTO:** Relaciona PARCEIRO e ATIVIDADE com valor de aporte.
 - **RL_MEMBRO_PROJETO:** Relaciona PARTICIPANTE e PROJETO com papel de atuação.
@@ -106,7 +106,7 @@ A nomenclatura segue a Metodologia de Administração de Dados (MAD/IBAMA): pref
 
 ### 4.1 Estratégia de Tradução MER → Relacional
 
-PKs implementadas com SERIAL. Constraints CHECK garantem domínios (ex: ST_PRESENCA IN ('PRESENTE','AUSENTE')). Constraints UNIQUE garantem unicidade de certificados e feedbacks.
+PKs implementadas com SERIAL. Constraints CHECK garantem regras de negócio e integridade de domínio (ex: `ST_PRESENCA IN ('PRESENTE','AUSENTE')`, `VL_CARGA_HORARIA > 0`, `VL_APORTE > 0`). Constraints UNIQUE garantem unicidade de certificados, feedbacks, chaves naturais (`DS_EMAIL_CONTATO`) e impedem matrículas repetidas (`ID_PARTICIPANTE, ID_ATIVIDADE`).
 
 Exemplo da estrutura DDL:
 
@@ -125,13 +125,13 @@ CREATE TABLE TB_ATIVIDADE (
 
 ### 4.2 Políticas de Governança (PPP1, PBR1, MAD1)
 
-**PPP1 - Política de Preservação de Privacidade:** Foram criados 4 perfis de acesso (dba_ic, sistema_ic, analise_ic, dbbackup_ic) com permissões GRANT/REVOKE específicas. O perfil sistema_ic tem acesso DML apenas em tabelas negociais, sem acesso às tabelas de auditoria. O perfil analise_ic tem acesso SELECT em tabelas e views, sem acesso a tabelas de auditoria. O perfil dbbackup_ic tem permissões de leitura para execução de backups. Adicionalmente, a auditoria de dados sensíveis (PII) foi implementada via `TA_TB_PARTICIPANTE`, protegendo nome, e-mail e vínculo institucional dos participantes.
+**PPP1 - Política de Preservação de Privacidade:** Foram criados 4 perfis de acesso (`dba_ic`, `sistema_ic`, `analise_ic`, `dbbackup_ic`) com permissões GRANT/REVOKE específicas. O perfil `sistema_ic` tem acesso DML apenas em tabelas negociais, sem acesso às tabelas de auditoria. O perfil `analise_ic` tem acesso SELECT em tabelas e views, sem acesso a tabelas de auditoria. O perfil `dbbackup_ic` tem permissões de leitura para execução de backups (renomeado do prefixo reservado original para respeitar as regras do SGBD e o padrão `_ic` do projeto). Adicionalmente, a auditoria de dados sensíveis (PII) foi implementada via `TA_TB_PARTICIPANTE`, protegendo nome, e-mail e vínculo institucional dos participantes.
 
 **Auditoria (MAD1):** Onze tabelas de auditoria (TA_) registram todas as operações I/U/D em cada tabela do banco: TA_TB_ATIVIDADE, TA_RL_INSCRICAO_HISTORICO, TA_TB_PARTICIPANTE, TA_TB_PROJETO_EXTENSAO, TA_TB_INSTRUTOR, TA_TB_PARCEIRO, TA_TB_EMISSAO_CERTIFICADO, TA_TB_REGISTRO_FEEDBACK, TA_RL_ALOCACAO_INSTRUTOR, TA_RL_PATROCINIO_EVENTO e TA_RL_MEMBRO_PROJETO. Todas contêm TP_OPERACAO, DH_OPERACAO (timestamp), NM_USUARIO_BD, NM_USUARIO_APLICACAO e NM_TERMINAL. Funções FC_AUDIT_* capturam os dados via triggers TG_A_IUD_ com AFTER FOR EACH ROW. As tabelas de auditoria contêm todas as colunas das tabelas originais, conforme MAD1 §7.
 
 **PBR1 - Política de Backup e Recuperação:** Implementada com a tabela TL_LOG_BACKUP para registro de operações, função SP_EXECUTAR_BACKUP_FULL() para execução de backup full (com suporte a armazenamento local e remoto), SP_REGISTRAR_BACKUP() para registro de conclusão, e SP_TESTAR_INTEGRIDADE_BACKUP() para verificação de integridade dos backups.
 
-**Views (VW_):** Foram criadas 4 views para simplificar consultas e restringir acesso: VW_IMPACTO_PROJETO (resumo de impacto por projeto), VW_PARTICIPANTE_ATIVO (participantes com presença), VW_PARCEIRO_APORTE (parceiros e patrocínios), VW_CERTIFICADO_EMITIDO (certificados emitidos). Acesso SELECT concedido ao perfil analise_ic.
+**Views (VW_):** Foram criadas 4 views para simplificar consultas e restringir acesso: VW_IMPACTO_PROJETO (resumo de impacto por projeto), VW_PARTICIPANTE_ATIVO (participantes com presença), VW_PARCEIRO_APORTE (parceiros e patrocínios), VW_CERTIFICADO_EMITIDO (certificados emitidos). Acesso SELECT concedido ao perfil `analise_ic`.
 
 **Sequences (SQ_):** As sequences implícitas do SERIAL foram renomeadas para seguir o padrão SQ_ (ex: SQ_TB_INSTRUTOR, SQ_RL_INSCRICAO_HIST), garantindo conformidade com a nomenclatura MAD1.
 
@@ -141,7 +141,7 @@ CREATE TABLE TB_ATIVIDADE (
 
 ### 5.1 Estratégia de População
 
-O banco foi populado usando `generate_series()` e `random()` do PostgreSQL.
+O banco foi populado usando `generate_series()` e `random()` do PostgreSQL, atrelado à cláusula `ON CONFLICT DO NOTHING` nas tabelas associativas (como `RL_INSCRICAO_HISTORICO`) para garantir a resiliência do *script* contra a geração de pares duplicados (que violariam as restrições `UNIQUE` blindadas no banco).
 
 | Tabela                    | Registros   |
 |---------------------------|-------------|
@@ -159,7 +159,7 @@ O banco foi populado usando `generate_series()` e `random()` do PostgreSQL.
 
 ### 5.2 Consultas Desenvolvidas
 
-Foram elaboradas 30 consultas SQL (10 intermediárias + 20 avançadas), todas associadas a requisitos.
+Foram elaboradas 30 consultas SQL (10 intermediárias + 20 avançadas), todas associadas a requisitos. Erros de agrupamento (`GROUP BY`) que ocultavam dados textuais (como títulos de atividades e nomes de participantes nas queries 5 e 10) foram contornados elegantemente via `STRING_AGG()`.
 
 **Consultas Intermediárias (≥3 tabelas + ≥2 funções):**
 
@@ -169,12 +169,12 @@ Foram elaboradas 30 consultas SQL (10 intermediárias + 20 avançadas), todas as
 | I2 | RF1  | Atividades por projeto                         | JOIN, GROUP BY, COUNT       |
 | I3 | RF1  | Carga horária por instrutor                    | JOIN, GROUP BY, SUM, COUNT  |
 | I4 | RF5  | Patrocínio por parceiro                        | JOIN, GROUP BY, SUM, COUNT  |
-| I5 | RF2  | Participantes com ≥2 presenças                 | JOIN, GROUP BY, COUNT, HAVING |
+| I5 | RF2  | Participantes com ≥2 presenças                 | JOIN, GROUP BY, COUNT, HAVING, STRING_AGG |
 | I6 | RF6  | Média de notas por atividade                   | JOIN, GROUP BY, AVG, COUNT  |
 | I7 | RF7  | Atividades coordenadas                         | JOIN, GROUP BY, COUNT       |
 | I8 | RF3  | Certificados por atividade                     | JOIN, GROUP BY, COUNT       |
 | I9 | RF4  | Feedbacks por participante                     | JOIN, GROUP BY, COUNT, AVG  |
-| I10| RF7  | Membros por projeto                            | JOIN, GROUP BY, COUNT       |
+| I10| RF7  | Membros por projeto                            | JOIN, GROUP BY, COUNT, STRING_AGG |
 
 **Consultas Avançadas (≥3 tabelas + ≥3 funções):**
 
@@ -189,13 +189,13 @@ Foram elaboradas 30 consultas SQL (10 intermediárias + 20 avançadas), todas as
 | A7  | RF7  | Coordenador que leciona                          | Subconsulta, JOIN, GROUP BY, COUNT |
 | A8  | RF7  | Projetos acima da média de alunos                | Subconsulta, JOIN, GROUP BY, COUNT |
 | A9  | RF1  | Atividades com >1 instrutor e patrocínio         | IN, EXISTS, GROUP BY, COUNT      |
-| A10 | RF5  | Crescimento mensal                               | JOIN, GROUP BY, WINDOW, COUNT    |
+| A10 | RF5  | Crescimento mensal (MoM)                         | JOIN, GROUP BY, WINDOW (SUM, LAG), COUNT |
 | A11 | RF4  | Maior satisfação                                 | Subconsulta, JOIN, GROUP BY      |
 | A12 | RF3  | Certificado em toda inscrição                    | NOT EXISTS, JOIN, GROUP BY, COUNT |
 | A13 | RF2  | Super-participantes (>5)                         | Subconsulta, JOIN, GROUP BY, COUNT |
 | A14 | RF1  | Projetos com carga acima da média                | Subconsulta, JOIN, GROUP BY, COUNT |
 | A15 | RF2  | Primeira atividade                               | Subconsulta, JOIN, WINDOW        |
-| A16 | RF1  | Atividades por especialidade                     | Subconsulta, JOIN, GROUP BY, COUNT |
+| A16 | RF1  | Atividades por especialidade (≥2)                | Subconsulta, JOIN, GROUP BY, COUNT, ORDER BY |
 | A17 | RF4  | Menor feedback em atividade cheia                | Subconsulta, JOIN, GROUP BY, COUNT |
 | A18 | RF2  | Atividades recentes acima da média               | CTE, Subconsulta, JOIN, GROUP BY, COUNT |
 | A19 | RF5  | Parceiros em >1 projeto                          | Subconsulta, JOIN, GROUP BY, COUNT |
@@ -306,7 +306,7 @@ ORDER BY tc.table_name;
 
 ## 8. Conclusão
 
-O Marco 1 (MIBD) atendeu aos requisitos de complexidade esperados. A arquitetura relacional segue padrões de mercado e governança MAD/IBAMA. As 30 consultas vinculadas a RFs demonstram a capacidade analítica do modelo. O banco encontra-se populado (>5.500 participantes, >11.000 inscrições) e otimizado com 10 índices (speedup médio de ~5,8x). As políticas PPP1, PBR1 e MAD1 foram integralmente implementadas, incluindo auditoria de dados sensíveis (PII) com a tabela `TA_TB_PARTICIPANTE` e armazenamento local e remoto de backups.
+O Marco 2 atendeu rigorosamente aos requisitos de complexidade, segurança e integridade de dados estipulados. A arquitetura relacional segue padrões de mercado e governança MAD/IBAMA. As deficiências encontradas no Marco 1 foram sanadas, com a inclusão de restrições de integridade de domínio rígidas (`CHECK`) e chaves naturais blindadas no SGBD. As 30 consultas vinculadas a RFs foram refinadas, extraindo máximo potencial de manipulação de *strings* (`STRING_AGG`) e cálculos relativos (*Window Functions* como `LAG`), provando sua capacidade analítica. O banco encontra-se resiliente contra conflitos de inserção (`ON CONFLICT DO NOTHING`), perfeitamente populado (>5.500 participantes) e otimizado com índices de alto desempenho.
 
 ---
 
