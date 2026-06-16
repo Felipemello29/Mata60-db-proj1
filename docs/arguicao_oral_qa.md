@@ -241,3 +241,16 @@ Este documento reúne possíveis questionamentos que os avaliadores podem fazer 
 
 **Q70 (Melhoria: Ordenação e Semântica na Query 16): Durante a revisão da Query 16, que agrupa especialidades de instrutores com duas ou mais atividades, nós alteramos a cláusula `HAVING` de `> 1` para `>= 2` e inserimos um novo `ORDER BY`. Qual foi o ganho técnico com essas modificações?**
 **Resposta Esperada:** A alteração matemática de `> 1` para `>= 2` no filtro do agrupamento não afeta a lógica final, mas melhora radicalmente a semântica e a legibilidade do código-fonte, alinhando a sintaxe escrita do SQL exatamente à forma como a Regra de Negócio foi concebida textualmente ("duas ou mais"). Em complemento, a introdução do `ORDER BY total_atividades DESC` garantiu que o banco de dados assumisse a responsabilidade de ordenar os dados, devolvendo as especialidades mais ativas no topo do relatório e aliviando a camada da interface gráfica de realizar ordenações adicionais em Arrays.
+
+
+## 5. Questões Adicionais sobre a Validação e Correções (Pós-Revisão Analítica)
+
+**Pergunta 1:** Durante a revisão do script consolidado, foi apontado um erro na coluna DH_OPERACAO das tabelas de auditoria. Qual foi a correção e o motivo?
+**Resposta Esperada:** A coluna `DH_OPERACAO` (Data/Hora) foi renomeada para `DT_OPERACAO`. Apesar de conter um `TIMESTAMP` (que registra hora), o Documento de Arquitetura MAD1 exigia estritamente o uso da sigla `DT_` para essa coluna de auditoria. A adequação visa respeitar as restrições normativas do documento do cliente.
+
+**Pergunta 2:** O relatório mencionou que a nomeação das Triggers (ex: `TG_A_IUD_TB_ATIVIDADE`) estava fora do padrão. Como isso foi resolvido?
+**Resposta Esperada:** O padrão exigia `TG_[A/B]_[I/U/D]_NomeTabela`, ou seja, apenas uma letra para o tipo de operação. O script foi corrigido desmembrando as triggers aglutinadas em três triggers separadas (ex: `TG_A_I_TB_ATIVIDADE`, `TG_A_U_TB_ATIVIDADE` e `TG_A_D_TB_ATIVIDADE`). Isso não só adere ao padrão de forma rigorosa como facilita manutenções futuras isoladas por operação.
+
+**Pergunta 3:** No que diz respeito às chaves estrangeiras (FK), qual foi a falha de nomenclatura corrigida?
+**Resposta Esperada:** A regra definia `FK_TabelaPai_TabelaFilha_Nome`. As constraints estavam usando apenas o nome genérico. Elas foram renomeadas para refletir a semântica completa exigida (ex: `FK_TB_PROJETO_EXTENSAO_TB_ATIVIDADE_PROJ`).
+

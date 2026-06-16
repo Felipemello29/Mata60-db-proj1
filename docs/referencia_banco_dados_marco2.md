@@ -127,7 +127,7 @@ Este documento serve como referência rápida para todas as tabelas e pesquisas 
 *   **Tabelas Consultadas:** `TB_PARTICIPANTE`, `RL_INSCRICAO_HISTORICO`, `TB_ATIVIDADE`
 
 **7. Projetos com Atuação Acumulada do Coordenador (Coordenador = Instrutor)**
-*   **Justificativa/Montagem:** Identifica o gargalo quando as chaves `ID_INSTRUTOR` e `ID_INSTR_COORDENADOR` coincidem por meio de JOIN, tudo associado a uma Subquery de volume de atividades (>5).
+*   **Justificativa/Montagem:** Utiliza uma sub-query no SELECT para contabilizar corretamente o total de atividades do projeto pai, e utiliza EXISTS para certificar que o coordenador de fato ministra aulas nele. Tudo associado a uma Subquery de restrição de volume (>5 atividades no projeto).
 *   **Tabelas Consultadas:** `TB_PROJETO_EXTENSAO`, `TB_ATIVIDADE`, `RL_ALOCACAO_INSTRUTOR`
 
 **8. Projetos com Alta Concentração de 'Alunos'**

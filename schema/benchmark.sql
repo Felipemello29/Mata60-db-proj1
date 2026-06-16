@@ -41,7 +41,7 @@ DROP INDEX IF EXISTS IDX_INSCRICAO_PRESENCA_NOTA;
 -- ============================================================================
 -- PHASE 2: BASELINE BENCHMARK (No indexes except PKs)
 -- ============================================================================
--- Each query is run 20 times inside a DO block. We use clock_timestamp()
+-- Each query is run 5 times inside a DO block to minimize page cache skew (Note: to fully clear shared_buffers, use pg_prewarm or restart PG). We use clock_timestamp()
 -- for precise wall-clock timing.
 
 -- IMPORTANT NOTE FOR EXECUTION:
@@ -57,7 +57,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-1: Participants enrolled per project
         start_ts := clock_timestamp();
         FOR r IN
@@ -81,7 +81,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-2: Activities per project with coordinator
         start_ts := clock_timestamp();
         FOR r IN
@@ -103,7 +103,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-3: Instructor workload across activities
         start_ts := clock_timestamp();
         FOR r IN
@@ -125,7 +125,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-4: Partner sponsorship with activities
         start_ts := clock_timestamp();
         FOR r IN
@@ -147,7 +147,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-5: Participants who attended >= 2 activities
         start_ts := clock_timestamp();
         FOR r IN
@@ -171,7 +171,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-6: Average grade per activity per project
         start_ts := clock_timestamp();
         FOR r IN
@@ -194,7 +194,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-7: Coordinator activity count
         start_ts := clock_timestamp();
         FOR r IN
@@ -216,7 +216,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-8: Certificates per activity
         start_ts := clock_timestamp();
         FOR r IN
@@ -238,7 +238,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-9: Participant feedback aggregation
         start_ts := clock_timestamp();
         FOR r IN
@@ -260,7 +260,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Int-10: Project members with names
         start_ts := clock_timestamp();
         FOR r IN
@@ -282,7 +282,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-1: Rank participants by average grade
         start_ts := clock_timestamp();
         FOR r IN
@@ -307,7 +307,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-2: Top 3 projects by certificates
         start_ts := clock_timestamp();
         FOR r IN
@@ -335,7 +335,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-3: Activities with above-average participation
         start_ts := clock_timestamp();
         FOR r IN
@@ -362,7 +362,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-4: Instructors who never coordinated a project
         start_ts := clock_timestamp();
         FOR r IN
@@ -388,7 +388,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-5: Running total of sponsorship per partner
         start_ts := clock_timestamp();
         FOR r IN
@@ -411,7 +411,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-6: Grade as percentage of max per activity
         start_ts := clock_timestamp();
         FOR r IN
@@ -437,7 +437,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-7: Projects where coordinator also teaches
         start_ts := clock_timestamp();
         FOR r IN
@@ -464,7 +464,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-8: Projects with above-average ALUNO members
         start_ts := clock_timestamp();
         FOR r IN
@@ -496,7 +496,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-9: Activities with >1 instructor AND a sponsor
         start_ts := clock_timestamp();
         FOR r IN
@@ -520,7 +520,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-10: Month-over-month project growth
         start_ts := clock_timestamp();
         FOR r IN
@@ -546,7 +546,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-11: Activity with highest avg satisfaction
         start_ts := clock_timestamp();
         FOR r IN
@@ -573,7 +573,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-12: Participants with certificate for every activity
         start_ts := clock_timestamp();
         FOR r IN
@@ -600,7 +600,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-13: Super-participants (>5 enrollments)
         start_ts := clock_timestamp();
         FOR r IN
@@ -626,7 +626,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-14: Projects above average workload
         start_ts := clock_timestamp();
         FOR r IN
@@ -652,7 +652,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-15: First activity date per participant (>2 activities)
         start_ts := clock_timestamp();
         FOR r IN
@@ -678,7 +678,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-16: Activities by instructor specialty (>= 2 activities), ordered
         start_ts := clock_timestamp();
         FOR r IN
@@ -706,7 +706,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-17: Lowest feedback in highly attended activity
         start_ts := clock_timestamp();
         FOR r IN
@@ -733,7 +733,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-18: Recent activities with above-average enrollment
         start_ts := clock_timestamp();
         FOR r IN
@@ -763,7 +763,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-19: Partners sponsoring >1 project
         start_ts := clock_timestamp();
         FOR r IN
@@ -787,7 +787,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         -- Query Adv-20: Grade difference from activity average
         start_ts := clock_timestamp();
         FOR r IN
@@ -834,7 +834,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, proj.DS_NOME_PROJETO, COUNT(i.ID_INSCRICAO) as total_inscricoes
@@ -857,7 +857,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT proj.DS_NOME_PROJETO, inst.DS_NOME_INSTRUTOR AS coordenador, COUNT(a.ID_ATIVIDADE) as total_atividades
@@ -878,7 +878,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT inst.DS_NOME_INSTRUTOR, SUM(alloc.VL_CARGA_HORARIA) as total_horas, COUNT(a.ID_ATIVIDADE) as total_atividades
@@ -899,7 +899,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT part.DS_NOME_ORGANIZACAO, SUM(pat.VL_APORTE) as total_patrocinio, COUNT(a.ID_ATIVIDADE) as total_atividades
@@ -920,7 +920,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, COUNT(a.ID_ATIVIDADE) as total_presencas, STRING_AGG(a.DS_TITULO_ATIVIDADE, ', ') as nomes_atividades
@@ -943,7 +943,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT a.DS_TITULO_ATIVIDADE, proj.DS_NOME_PROJETO, AVG(i.VL_NOTA_AVALIACAO) as media_nota
@@ -965,7 +965,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT inst.DS_NOME_INSTRUTOR, COUNT(a.ID_ATIVIDADE) as total_atividades
@@ -986,7 +986,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT a.DS_TITULO_ATIVIDADE, COUNT(cert.ID_CERTIFICADO) as total_certificados
@@ -1007,7 +1007,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, COUNT(f.ID_FEEDBACK) as total_feedbacks, AVG(f.VL_NOTA_SATISFACAO) as media_satisfacao
@@ -1028,7 +1028,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT proj.DS_NOME_PROJETO, COUNT(mem.ID_PARTICIPANTE) as total_membros, STRING_AGG(p.DS_NOME_PARTICIPANTE, ', ') as nomes_participantes
@@ -1049,7 +1049,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT sub.DS_NOME_PARTICIPANTE, sub.media_global, RANK() OVER(ORDER BY sub.media_global DESC) as ranking
@@ -1073,7 +1073,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT DS_NOME_PROJETO, total_certificados
@@ -1100,7 +1100,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             WITH AtividadeContagem AS (
@@ -1126,7 +1126,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT inst.DS_NOME_INSTRUTOR, COUNT(DISTINCT alloc.ID_ATIVIDADE) as total_atividades_alocadas
@@ -1151,7 +1151,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_ORGANIZACAO, a.DS_TITULO_ATIVIDADE, pat.VL_APORTE,
@@ -1173,7 +1173,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, a.DS_TITULO_ATIVIDADE, i.VL_NOTA_AVALIACAO,
@@ -1198,7 +1198,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT proj.DS_NOME_PROJETO, COUNT(DISTINCT a.ID_ATIVIDADE) as total_atividades
@@ -1224,7 +1224,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT proj.DS_NOME_PROJETO, COUNT(p.ID_PARTICIPANTE) as total_alunos
@@ -1255,7 +1255,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT DS_TITULO_ATIVIDADE
@@ -1278,7 +1278,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT DATE_TRUNC('month', proj.DT_CRIACAO) as mes_criacao,
@@ -1303,7 +1303,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT DS_TITULO_ATIVIDADE, media_satisfacao
@@ -1329,7 +1329,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, COUNT(c.ID_CERTIFICADO) as total_certificados
@@ -1355,7 +1355,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, COUNT(i.ID_INSCRICAO) as total_inscricoes
@@ -1380,7 +1380,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT proj.DS_NOME_PROJETO, AVG(alloc.VL_CARGA_HORARIA) as avg_workload,
@@ -1405,7 +1405,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT DISTINCT p.DS_NOME_PARTICIPANTE,
@@ -1430,7 +1430,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT inst.DS_ESPECIALIDADE, COUNT(DISTINCT a.ID_ATIVIDADE) as total_atividades
@@ -1457,7 +1457,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, f.VL_NOTA_SATISFACAO, a.DS_TITULO_ATIVIDADE
@@ -1483,7 +1483,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             WITH RecentActivities AS (
@@ -1512,7 +1512,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_ORGANIZACAO,
@@ -1535,7 +1535,7 @@ DECLARE
     end_ts TIMESTAMP;
     r RECORD;
 BEGIN
-    FOR run IN 1..20 LOOP
+    FOR run IN 1..5 LOOP
         start_ts := clock_timestamp();
         FOR r IN
             SELECT p.DS_NOME_PARTICIPANTE, a.DS_TITULO_ATIVIDADE, i.VL_NOTA_AVALIACAO,
@@ -1572,3 +1572,44 @@ SELECT
 FROM benchmark_results b
 GROUP BY b.query_id, b.query_type
 ORDER BY b.query_type, b.query_id;
+
+
+-- ============================================================================
+-- PHASE 6: DML OVERHEAD BENCHMARK (INSERT/UPDATE/DELETE)
+-- ============================================================================
+-- This measures the overhead of the FOR EACH ROW audit triggers.
+
+DO $$
+DECLARE
+    start_ts TIMESTAMP;
+    end_ts TIMESTAMP;
+BEGIN
+    -- 1. INSERT Benchmark
+    start_ts := clock_timestamp();
+    FOR run IN 1..500 LOOP
+        INSERT INTO TB_ATIVIDADE (DS_TITULO_ATIVIDADE, DS_CONTEUDO_PROG, DT_REALIZACAO, ID_PROJ_VINCULADO)
+        VALUES ('Benchmark DML ' || run, 'Test Content', CURRENT_DATE, NULL);
+    END LOOP;
+    end_ts := clock_timestamp();
+    INSERT INTO benchmark_results VALUES (101, 'DML_INSERT', 1, 'indexed',
+        EXTRACT(EPOCH FROM end_ts - start_ts) * 1000);
+
+    -- 2. UPDATE Benchmark
+    start_ts := clock_timestamp();
+    UPDATE TB_ATIVIDADE SET DS_CONTEUDO_PROG = 'Updated Content' WHERE DS_TITULO_ATIVIDADE LIKE 'Benchmark DML %';
+    end_ts := clock_timestamp();
+    INSERT INTO benchmark_results VALUES (102, 'DML_UPDATE', 1, 'indexed',
+        EXTRACT(EPOCH FROM end_ts - start_ts) * 1000);
+
+    -- 3. DELETE Benchmark
+    start_ts := clock_timestamp();
+    DELETE FROM TB_ATIVIDADE WHERE DS_TITULO_ATIVIDADE LIKE 'Benchmark DML %';
+    end_ts := clock_timestamp();
+    INSERT INTO benchmark_results VALUES (103, 'DML_DELETE', 1, 'indexed',
+        EXTRACT(EPOCH FROM end_ts - start_ts) * 1000);
+END $$;
+
+SELECT query_type as operation, execution_time_ms as total_time_ms
+FROM benchmark_results
+WHERE query_type LIKE 'DML_%'
+ORDER BY query_id;
