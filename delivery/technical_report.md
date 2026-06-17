@@ -44,11 +44,11 @@ Com base no estudo de caso inicial, foram levantados sete requisitos funcionais 
 O banco de dados modela as seguintes entidades e seus relacionamentos:
 
 **Entidades principais**:
-- **TB_PROJETO_EXTENSAO**: Projetos estruturantes que coordenam atividades de extensão. Atributos: ID_PROJETO (PK, SERIAL), DS_NOME_PROJETO, DT_CRIACAO, ID_INSTR_COORDENADOR (FK).
-- **TB_ATIVIDADE**: Eventos, minicursos e workshops. Atributos: ID_ATIVIDADE (PK, SERIAL), DS_TITULO_ATIVIDADE, DS_CONTEUDO_PROG, DT_REALIZACAO, ID_PROJ_VINCULADO (FK, nullable).
-- **TB_PARTICIPANTE**: Público atendido (alunos, comunidade, servidores). Atributos: ID_PARTICIPANTE (PK, SERIAL), DS_NOME_PARTICIPANTE, DS_EMAIL_CONTATO, TP_VINCULO_INST.
+- **TB_PROJETO_EXTENSAO**: Projetos estruturantes que coordenam atividades de extensão. Atributos: ID_PROJETO (PK, SERIAL), DS_NOME_PROJETO (UNIQUE), DT_CRIACAO, ID_INSTR_COORDENADOR (FK, ON DELETE RESTRICT).
+- **TB_ATIVIDADE**: Eventos, minicursos e workshops. Atributos: ID_ATIVIDADE (PK, SERIAL), DS_TITULO_ATIVIDADE, DS_CONTEUDO_PROG, DT_REALIZACAO (CHECK >= CURRENT_DATE), ID_PROJ_VINCULADO (FK, ON DELETE SET NULL).
+- **TB_PARTICIPANTE**: Público atendido (alunos, comunidade, servidores). Atributos: ID_PARTICIPANTE (PK, SERIAL), DS_NOME_PARTICIPANTE, DS_EMAIL_CONTATO (CITEXT, UNIQUE, CHECK), TP_VINCULO_INST (CHECK).
 - **TB_INSTRUTOR**: Docentes, palestrantes e oficineiros. Atributos: ID_INSTRUTOR (PK, SERIAL), DS_NOME_INSTRUTOR, DS_ESPECIALIDADE.
-- **TB_PARCEIRO**: Empresas e ONGs parceiras. Atributos: ID_PARCEIRO (PK, SERIAL), DS_NOME_ORGANIZACAO, TP_PARCEIRO.
+- **TB_PARCEIRO**: Empresas e ONGs parceiras. Atributos: ID_PARCEIRO (PK, SERIAL), DS_NOME_ORGANIZACAO (UNIQUE), TP_PARCEIRO (CHECK).
 - **TB_EMISSAO_CERTIFICADO**: Certificados gerados automaticamente. Atributos: ID_CERTIFICADO (PK, SERIAL), ID_INSCRICAO (FK, UNIQUE), DT_EMISSAO, CD_AUTENTICIDADE (UNIQUE).
 - **TB_REGISTRO_FEEDBACK**: Avaliações de qualidade. Atributos: ID_FEEDBACK (PK, SERIAL), ID_INSCRICAO (FK, UNIQUE), VL_NOTA_SATISFACAO (CHECK 1-5), DS_COMENTARIO_ABERTO.
 

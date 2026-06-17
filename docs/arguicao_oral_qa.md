@@ -242,6 +242,12 @@ Este documento reúne possíveis questionamentos que os avaliadores podem fazer 
 **Q70 (Melhoria: Ordenação e Semântica na Query 16): Durante a revisão da Query 16, que agrupa especialidades de instrutores com duas ou mais atividades, nós alteramos a cláusula `HAVING` de `> 1` para `>= 2` e inserimos um novo `ORDER BY`. Qual foi o ganho técnico com essas modificações?**
 **Resposta Esperada:** A alteração matemática de `> 1` para `>= 2` no filtro do agrupamento não afeta a lógica final, mas melhora radicalmente a semântica e a legibilidade do código-fonte, alinhando a sintaxe escrita do SQL exatamente à forma como a Regra de Negócio foi concebida textualmente ("duas ou mais"). Em complemento, a introdução do `ORDER BY total_atividades DESC` garantiu que o banco de dados assumisse a responsabilidade de ordenar os dados, devolvendo as especialidades mais ativas no topo do relatório e aliviando a camada da interface gráfica de realizar ordenações adicionais em Arrays.
 
+**Q71 (Refinamento: Tipagem de E-mail): Por que alterar o tipo do e-mail do Participante de `VARCHAR(100)` para a extensão `CITEXT`? E qual o papel da verificação `LIKE '%@%'`?**
+**Resposta Esperada:** O tipo `CITEXT` nativamente trata as strings ignorando maiúsculas e minúsculas (case-insensitive). Se deixássemos como `VARCHAR`, a *constraint UNIQUE* deixaria passar e-mails idênticos com capitalização diferente (como Joao@ufba.br e joao@ufba.br), o que causaria ambiguidade e dados sujos. A restrição `CHECK LIKE '%@%'` foi adicionada apenas como uma camada básica e nativa de validação estrutural do texto, não permitindo registros sem a arroba.
+
+**Q72 (Refinamento: Deleção Lógica em Atividades): Por que aplicar a constraint `ON DELETE SET NULL` na chave estrangeira que liga uma Atividade ao seu Projeto pai (`ID_PROJ_VINCULADO`)?**
+**Resposta Esperada:** Projetos de extensão podem ser extintos ou ter seu registro apagado no banco. Se usássemos o padrão `RESTRICT`, seria impossível deletar o projeto enquanto ele possuísse atividades no histórico. Usar `SET NULL` resolve o problema mantendo o histórico intacto: a Atividade continua existindo perfeitamente no banco como uma atividade concluída/independente (sua FK ficará nula), e o banco pode apagar o Projeto sem problemas estruturais.
+
 
 ## 5. Questões Adicionais sobre a Validação e Correções (Pós-Revisão Analítica)
 

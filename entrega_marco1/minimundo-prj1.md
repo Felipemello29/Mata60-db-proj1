@@ -27,22 +27,22 @@ Utilizam o prefixo `TB_` para tabelas de sistema e negociais.
 
 * **TB_PROJETO_EXTENSAO**: Concentra os grandes projetos de extensão institucionais que abrigam diversas atividades.
     * **ID_PROJETO** [int, sequence]: Identificador do projeto (PK).
-    * **DS_NOME_PROJETO** [varchar 150]: Título do projeto de extensão.
+    * **DS_NOME_PROJETO** [varchar 150, unique]: Título do projeto de extensão (Não permite duplicatas).
     * **DT_CRIACAO** [date]: Data de fundação/aprovação do projeto.
-    * **ID_INSTR_COORDENADOR** [int]: FK designando o docente/instrutor que coordena o projeto.
+    * **ID_INSTR_COORDENADOR** [int]: FK designando o docente/instrutor que coordena o projeto (Restrito na exclusão).
 
 * **TB_ATIVIDADE**: Tabela de cadastro das atividades de extensão, como eventos, minicursos e workshops.
     * **ID_ATIVIDADE** [int, sequence]: Identificador único da atividade (PK).
     * **DS_TITULO_ATIVIDADE** [varchar 150]: Denominação da atividade.
     * **DS_CONTEUDO_PROG** [text]: Descrição dos conteúdos abordados.
-    * **DT_REALIZACAO** [date]: Data agendada para a atividade.
-    * **ID_PROJ_VINCULADO** [int]: FK de rastreio (pode ser nulo caso a atividade seja avulsa e não pertença a um projeto).
+    * **DT_REALIZACAO** [date]: Data agendada para a atividade (Deve ser igual ou posterior à data atual).
+    * **ID_PROJ_VINCULADO** [int]: FK de rastreio (pode ser nulo caso a atividade seja avulsa ou se o projeto for excluído - Set Null).
 
 * **TB_PARTICIPANTE**: Tabela de gerenciamento do público atendido pelas ações.
     * **ID_PARTICIPANTE** [int, sequence]: Identificador do participante (PK).
     * **DS_NOME_PARTICIPANTE** [varchar 150]: Nome completo.
-    * **DS_EMAIL_CONTATO** [varchar 100]: E-mail para comunicação.
-    * **TP_VINCULO_INST** [varchar 30]: Classificação (e.g., Aluno, Comunidade Externa).
+    * **DS_EMAIL_CONTATO** [citext, unique]: E-mail para comunicação (Case-insensitive, com validação básica e não permite duplicatas).
+    * **TP_VINCULO_INST** [varchar 30]: Classificação restrita (Aluno, Comunidade, Servidor).
 
 * **TB_INSTRUTOR**: Concentra registros dos docentes, palestrantes ou oficineiros.
     * **ID_INSTRUTOR** [int, sequence]: Identificador do instrutor (PK).
@@ -51,8 +51,8 @@ Utilizam o prefixo `TB_` para tabelas de sistema e negociais.
 
 * **TB_PARCEIRO**: Tabela que controla as empresas e ONGs parcerias da extensão.
     * **ID_PARCEIRO** [int, sequence]: Identificador da organização (PK).
-    * **DS_NOME_ORGANIZACAO** [varchar 150]: Nome da empresa ou ONG.
-    * **TP_PARCEIRO** [varchar 30]: Categorização (Empresa Privada, ONG, Órgão Público).
+    * **DS_NOME_ORGANIZACAO** [varchar 150, unique]: Nome da empresa ou ONG (Não permite duplicatas).
+    * **TP_PARCEIRO** [varchar 30]: Categorização restrita (Empresa Privada, ONG, Órgão Público).
 
 * **TB_EMISSAO_CERTIFICADO**: Transacional de controle para certificados gerados automaticamente.
     * **ID_CERTIFICADO** [int, sequence]: Identificador do documento (PK).

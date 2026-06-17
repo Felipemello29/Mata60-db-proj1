@@ -1,0 +1,70 @@
+ POSSO ESTÁ ERRADO NA ANÁLISE AQUI, mas seguem algumas considerações sobre o CREATE das BASE TABLES (TB_):
+(Estou citando isso por elas serem base de nosso projeto, inconsistências nelas geram fragilidades em nosso BD). E acho que o Professor pedirá que sejamos bem rígidos com a criação delas. Já que é o basico.
+
+1 - Considerer inserir:
+    CONSTRAINT UQ_TB_PROJETO_EXTENSAO_NOME
+    UNIQUE (DS_NOME_PROJETO)
+    
+    Hoje é permitido: Projetos de Extenção com o mesmo nome.
+    Pergunta para o requisito: Pode existir mais de um projeto com exatamente o mesmo nome? Se a resposta for "não", acho que devemos adicionar UNIQUE.
+    
+    Preciosismo aqui, mas poderiamos ainda considerar incluir:
+    REFERENCES TB_INSTRUTOR(ID_INSTRUTOR)
+    ON DELETE RESTRICT
+    Para não excluir um INSTUTOR que esteja responsável por um PROJETO_EXTENSAO.
+
+2 - Considerer em:
+    CREATE TABLE TB_ATIVIDADE
+    DT_REALIZACAO DATE NOT NULL DEFAULT CURRENT_DATE
+    Pelo nome do campo DT_REALIZACAO seria a data em que a atividade acontecerá. E não a data em que foi cadastrada.
+    Assim, usar o DEFAULT CURRENT_DATE é impreciso.
+    Acredito que o correto seria:
+    DT_REALIZACAO DATE NOT NULL
+    Poderíamos querer nos precaver apenas de cadastro de datas passadas, incluiria então:
+    CONSTRAINT CK_TB_ATIVIDADE_DT_REALIZACAO
+    CHECK (DT_REALIZACAO >= CURRENT_DATE),
+    
+    Se alguem executar uma exclusão de um projeto na TB_PROJETO_EXTENSAO O PostgreSQL bloqueará a exclusão. Isso é seguro. Pois existe uma ATIVIDADE vinculada ao PROJETO_EXTENSAO. Mas a regra de negócio pode excluir um PROJETO_EXTENSAO mesmo existidno uma ATIVIDADE, porque uma atividade já realizada pode continuar existindo mesmo que o projeto seja encerrado. E alem disso, ID_PROJ_VINCULADO INT pode ser nulo, ou seja, podemos ter uma ATIVIDADE que não esteja vinculada a nenhum PROJETO_EXTENSAO. Assim, ficaria:
+    CONSTRAINT FK_TB_PROJETO_EXTENSAO_TB_ATIVIDADE_PROJ
+    FOREIGN KEY (ID_PROJ_VINCULADO)
+    REFERENCES TB_PROJETO_EXTENSAO(ID_PROJETO)
+    ON DELETE SET NULL
+
+3 - Considerar em:
+    CREATE TABLE TB_PARTICIPANTE
+    TP_VINCULO_INST VARCHAR(30) NOT NULL não deveria ter um CHECK?
+    Hoje o banco aceita: Aluno, Comunidade Externa, Professor, Servidor, abcxyz, banana, 123... Tudo isso é válido para um VARCHAR(30).
+    Como os tipos são conhecidos, podemos restringir:
+    CONSTRAINT CK_TB_PARTICIPANTE_VINCULO
+    CHECK (
+        TP_VINCULO_INST IN (
+            'ALUNO',
+            'COMUNIDADE',
+            'SERVIDOR'
+        )
+    )
+    
+    DS_EMAIL_CONTATO VARCHAR(100) NOT NULL,
+    E-mail é case-sensitive. joao@email.com e JOAO@email.com são considerados diferentes para uma constraint UNIQUE. Isso pode ser um problema. Uma solução comum é:
+        Antes cria CREATE EXTENSION IF NOT EXISTS citext;
+        Depois DS_EMAIL_CONTATO CITEXT NOT NULL UNIQUE
+        
+        Ainda temos de considerar:
+        CONSTRAINT CK_TB_PARTICIPANTE_EMAIL
+        CHECK (DS_EMAIL_CONTATO LIKE '%@%')
+
+4 - Considerar em:
+    CREATE TABLE TB_PARCEIRO
+    Mesma questão do CHECK do item 3. Hoje permite qualquer coisa. Como os tipos são conhecidos podemos restringir:
+    CONSTRAINT CK_TB_PARCEIRO_TIPO
+    CHECK (
+        TP_PARCEIRO IN (
+            'Empresa Privada',
+            'ONG',
+            'Órgao Público'
+        )
+    )
+    Aqui também permite nomes duplicados, então faz-se necessário:
+    CONSTRAINT UQ_TB_PARCEIRO_NOME
+    UNIQUE (DS_NOME_ORGANIZACAO)
+    E também o mesmo problema de maiúsculas/minúsculas.

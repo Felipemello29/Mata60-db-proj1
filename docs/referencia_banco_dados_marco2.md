@@ -14,19 +14,19 @@ Este documento serve como referência rápida para todas as tabelas e pesquisas 
 
 **2. `TB_PROJETO_EXTENSAO`**
 *   **Descrição:** Guarda as informações dos projetos de extensão.
-*   **Justificativa/Parâmetros:** Possui chave estrangeira apontando para `TB_INSTRUTOR` indicando o coordenador. A data de criação (`DT_CRIACAO`) tem um valor padrão `CURRENT_DATE`, garantindo que não falte a data em que o projeto foi submetido.
+*   **Justificativa/Parâmetros:** Possui chave estrangeira apontando para `TB_INSTRUTOR` indicando o coordenador (com regra `ON DELETE RESTRICT`). A restrição `UNIQUE` em `DS_NOME_PROJETO` foi adicionada para evitar projetos homônimos. A data de criação (`DT_CRIACAO`) tem um valor padrão `CURRENT_DATE`, garantindo que não falte a data em que o projeto foi submetido.
 
 **3. `TB_ATIVIDADE`**
 *   **Descrição:** Armazena as atividades específicas vinculadas a cada projeto.
-*   **Justificativa/Parâmetros:** Dependente de um projeto (`ID_PROJ_VINCULADO`), possui título, conteúdo programático e data de realização. A separação entre projeto e atividade garante flexibilidade para que um projeto possua múltiplos eventos distintos.
+*   **Justificativa/Parâmetros:** Dependente de um projeto (`ID_PROJ_VINCULADO`, com regra `ON DELETE SET NULL`), possui título, conteúdo programático e data de realização (`CHECK >= CURRENT_DATE`). A separação entre projeto e atividade garante flexibilidade para que um projeto possua múltiplos eventos distintos.
 
 **4. `TB_PARTICIPANTE`**
 *   **Descrição:** Cadastro das pessoas que participam ou integram os projetos/atividades.
-*   **Justificativa/Parâmetros:** Inclui nome, e-mail e um tipo de vínculo (`TP_VINCULO_INST` ex: 'ALUNO'). A coluna de e-mail possui restrição `UNIQUE` atuando como chave natural para impedir cadastros duplicados.
+*   **Justificativa/Parâmetros:** Inclui nome, e-mail (`CITEXT` case-insensitive e formato testado via `CHECK`) e um tipo de vínculo restrito rigidamente via constraint (`TP_VINCULO_INST` ex: 'ALUNO'). A coluna de e-mail possui restrição `UNIQUE` atuando como chave natural para impedir cadastros duplicados.
 
 **5. `TB_PARCEIRO`**
 *   **Descrição:** Organizações externas parceiras ou patrocinadoras.
-*   **Justificativa/Parâmetros:** Montada com um nome e tipo de parceiro (`TP_PARCEIRO`), sendo estruturalmente separada para permitir o vínculo de múltiplos patrocínios a uma ou mais atividades.
+*   **Justificativa/Parâmetros:** Montada com um nome restrito como `UNIQUE` e tipo de parceiro validado via `CHECK CONSTRAINT` (`TP_PARCEIRO`), sendo estruturalmente separada para permitir o vínculo de múltiplos patrocínios a uma ou mais atividades.
 
 ### Tabelas Associativas e de Relacionamento
 

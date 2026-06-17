@@ -9,24 +9,24 @@ Este documento descreve o modelo conceitual do banco de dados de Gestão de Exte
 #### PROJETO DE EXTENSAO
 Representa os grandes projetos de extensão institucionais que abrigam diversas atividades.
 - **ID_PROJETO** (PK, int, sequence): Identificador do projeto
-- **DS_NOME_PROJETO** (varchar 150, NOT NULL): Título do projeto
+- **DS_NOME_PROJETO** (varchar 150, NOT NULL, UNIQUE): Título do projeto
 - **DT_CRIACAO** (date, NOT NULL): Data de fundação/aprovação
-- **ID_INSTR_COORDENADOR** (int, FK, NOT NULL): Instrutor coordenador do projeto
+- **ID_INSTR_COORDENADOR** (int, FK, NOT NULL): Instrutor coordenador do projeto (ON DELETE RESTRICT)
 
 #### ATIVIDADE
 Cadastro das atividades de extensão (eventos, minicursos, workshops).
 - **ID_ATIVIDADE** (PK, int, sequence): Identificador da atividade
 - **DS_TITULO_ATIVIDADE** (varchar 150, NOT NULL): Denominação da atividade
 - **DS_CONTEUDO_PROG** (text): Descrição dos conteúdos abordados
-- **DT_REALIZACAO** (date, NOT NULL): Data agendada
-- **ID_PROJ_VINCULADO** (int, FK, NULL): Projeto ao qual está vinculada (pode ser avulsa)
+- **DT_REALIZACAO** (date, NOT NULL, CHECK >= CURRENT_DATE): Data agendada
+- **ID_PROJ_VINCULADO** (int, FK, NULL): Projeto ao qual está vinculada (pode ser avulsa, ON DELETE SET NULL)
 
 #### PARTICIPANTE
 Público atendido pelas ações de extensão.
 - **ID_PARTICIPANTE** (PK, int, sequence): Identificador do participante
 - **DS_NOME_PARTICIPANTE** (varchar 150, NOT NULL): Nome completo
-- **DS_EMAIL_CONTATO** (varchar 100, NOT NULL): E-mail para comunicação
-- **TP_VINCULO_INST** (varchar 30, NOT NULL): Classificação (Aluno, Comunidade, Servidor)
+- **DS_EMAIL_CONTATO** (citext, NOT NULL, UNIQUE): E-mail para comunicação (Case-insensitive, formato validado)
+- **TP_VINCULO_INST** (varchar 30, NOT NULL, CHECK): Classificação restrita (Aluno, Comunidade, Servidor)
 
 #### INSTRUTOR
 Docentes, palestrantes ou oficineiros responsáveis pelas atividades.
@@ -37,8 +37,8 @@ Docentes, palestrantes ou oficineiros responsáveis pelas atividades.
 #### PARCEIRO
 Empresas e ONGs parceiras da extensão.
 - **ID_PARCEIRO** (PK, int, sequence): Identificador da organização
-- **DS_NOME_ORGANIZACAO** (varchar 150, NOT NULL): Nome da empresa ou ONG
-- **TP_PARCEIRO** (varchar 30, NOT NULL): Categorização (Empresa Privada, ONG, Órgão Público)
+- **DS_NOME_ORGANIZACAO** (varchar 150, NOT NULL, UNIQUE): Nome da empresa ou ONG
+- **TP_PARCEIRO** (varchar 30, NOT NULL, CHECK): Categorização restrita (Empresa Privada, ONG, Órgão Público)
 
 #### EMISSAO DE CERTIFICADO
 Controle transacional de certificados gerados automaticamente.
