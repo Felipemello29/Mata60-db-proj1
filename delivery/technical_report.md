@@ -188,7 +188,7 @@ Foram elaboradas **30 consultas SQL** (10 intermediárias + 20 avançadas), toda
 | A10 | RF5 | Crescimento mensal de projetos e inscrições | JOIN, GROUP BY, WINDOW, COUNT |
 | A11 | RF4 | Atividade com maior média de satisfação | Subconsulta, JOIN, GROUP BY |
 | A12 | RF3 | Participantes com certificado em toda inscrição | NOT EXISTS, JOIN, GROUP BY, COUNT |
-| A13 | RF2 | Super-participantes (>5 inscrições) | Subconsulta, JOIN, GROUP BY, COUNT |
+| A13 | RF2 | Super-participantes (>2 inscrições) | Subconsulta, JOIN, GROUP BY, COUNT |
 | A14 | RF1 | Projetos com carga horária acima da média | Subconsulta, JOIN, GROUP BY, COUNT |
 | A15 | RF2 | Primeira atividade de cada participante | Subconsulta, JOIN, WINDOW |
 | A16 | RF1 | Atividades por especialidade do instrutor | Subconsulta, JOIN, GROUP BY, COUNT |
@@ -236,38 +236,18 @@ Os resultados foram coletados executando-se o script `benchmark.sql` em uma inst
 
 | Query | Baseline Média (ms) | Baseline σ | Indexado Média (ms) | Indexado σ | Speedup |
 |-------|--------------------|------------|--------------------|------------|---------|
-| I1 | 42,35 | 3,21 | 4,87 | 0,45 | 8,70 |
-| I2 | 18,72 | 1,54 | 3,15 | 0,32 | 5,94 |
-| I3 | 28,14 | 2,18 | 5,42 | 0,51 | 5,19 |
-| I4 | 12,83 | 1,02 | 2,61 | 0,28 | 4,92 |
-| I5 | 56,47 | 4,35 | 6,23 | 0,58 | 9,06 |
-| I6 | 63,21 | 5,12 | 8,94 | 0,82 | 7,07 |
-| I7 | 15,36 | 1,21 | 2,78 | 0,30 | 5,53 |
-| I8 | 44,89 | 3,67 | 5,13 | 0,49 | 8,75 |
-| I9 | 51,63 | 4,08 | 7,42 | 0,67 | 6,96 |
-| I10 | 22,54 | 1,89 | 4,06 | 0,41 | 5,55 |
-| A1 | 78,42 | 6,15 | 12,36 | 1,12 | 6,34 |
-| A2 | 65,38 | 5,23 | 9,87 | 0,93 | 6,62 |
-| A3 | 72,15 | 5,78 | 11,24 | 1,05 | 6,42 |
-| A4 | 38,96 | 3,12 | 6,71 | 0,63 | 5,81 |
-| A5 | 15,24 | 1,18 | 3,92 | 0,38 | 3,89 |
-| A6 | 81,73 | 6,54 | 14,58 | 1,32 | 5,61 |
-| A7 | 45,21 | 3,45 | 7,83 | 0,74 | 5,77 |
-| A8 | 52,67 | 4,21 | 9,15 | 0,86 | 5,76 |
-| A9 | 12,35 | 0,98 | 2,14 | 0,22 | 5,77 |
-| A10 | 48,93 | 3,87 | 8,46 | 0,79 | 5,78 |
-| A11 | 58,44 | 4,63 | 10,72 | 0,98 | 5,45 |
-| A12 | 92,16 | 7,42 | 16,83 | 1,54 | 5,47 |
-| A13 | 67,38 | 5,41 | 11,56 | 1,08 | 5,83 |
-| A14 | 36,72 | 2,94 | 6,38 | 0,61 | 5,76 |
-| A15 | 74,85 | 5,96 | 13,47 | 1,24 | 5,56 |
-| A16 | 33,41 | 2,67 | 5,92 | 0,55 | 5,64 |
-| A17 | 49,26 | 3,88 | 8,73 | 0,81 | 5,64 |
-| A18 | 85,63 | 6,87 | 15,21 | 1,41 | 5,63 |
-| A19 | 28,17 | 2,23 | 4,35 | 0,43 | 6,48 |
-| A20 | 76,54 | 6,12 | 13,84 | 1,28 | 5,53 |
+| I5 | 4,23 | 0,48 | 3,89 | 0,49 | 1,09 |
+| I8 | 2,92 | 0,72 | 2,59 | 0,22 | 1,13 |
+| A1 | 8,84 | 1,10 | 8,49 | 0,98 | 1,04 |
+| A6 | 12,40 | 0,47 | 12,47 | 0,60 | 0,99 |
+| A10 | 4,14 | 0,43 | 4,09 | 0,31 | 1,01 |
+| A15 | 2,02 | 0,18 | 3,22 | 0,23 | 0,63 |
+| A20 | 11,56 | 0,65 | 11,63 | 1,41 | 0,99 |
+*(Amostra das consultas mais custosas de acordo com a revalidação do banco)*
 
-**Análise:** Observa-se speedup médio de **~5,9x** para as consultas intermediárias e **~5,7x** para as avançadas. As consultas que mais se beneficiaram foram aquelas com JOINs em `RL_INSCRICAO_HISTORICO` (maior volume: 11.000 registros), como I5 (9,06x) e I8 (8,75x). Consultas em tabelas pequenas como `TB_PARCEIRO` (ex: I4) tiveram speedup menor (~4,9x), pois o custo de sequential scan já era baixo. O desvio padrão reduzido no cenário indexado confirma maior estabilidade nos tempos de execução.
+**Análise Revalidada:** Observa-se um speedup médio de **~1.03x** para as consultas em geral. Os ganhos exponenciais reportados anteriormente (como 9,06x) eram fictícios e metodologicamente falhos. Duas razões técnicas explicam o comportamento real:
+1. **Redundância de Índices:** Tabelas como `TB_EMISSAO_CERTIFICADO` já possuíam índices B-Tree subjacentes devido à restrição `UNIQUE(ID_INSCRICAO)`. O cenário "baseline" continuava usando esses índices implícitos.
+2. **Data Volume:** 11.000 registros cabem perfeitamente no *Buffer Pool* do PostgreSQL. Para dados pequenos, o *Query Planner* escolhe *Sequential Scans* intencionalmente por ser mais rápido em memória do que percorrer árvores. O plano de indexação corrigido desativou os índices redundantes.
 
 ## 7. Exploração de Metadados
 

@@ -41,7 +41,12 @@ Para comprovar a eficácia dos índices, foi desenvolvido o script `schema/bench
 > [!IMPORTANT]
 > **Instrução para coleta de dados reais**: O banco de dados encontra-se estruturado e populado com mais de 5.500 participantes e 11.000 inscrições. Para visualizar a tabela de speedup final com precisão de milissegundos, execute o script `schema/benchmark.sql` em uma instância ativa do PostgreSQL (via `psql` ou pgAdmin) e copie a tabela resultante gerada na Fase 5 do script.
 
-### 3.1 Resultados Esperados
-Com base na teoria de otimização de consultas e no plano elaborado, espera-se:
-- **Speedup > 5x** nas consultas avançadas que envolvem a tabela `RL_INSCRICAO_HISTORICO` (que possui maior volume de dados), devido à indexação de suas FKs e do índice composto de presença e nota.
-- **Maior estabilidade** (menor desvio padrão) no tempo de resposta das consultas, visto que o planejador de consultas do PostgreSQL (Query Planner) utilizará Index Scans em vez de Sequential Scans nas tabelas mais populosas.
+### 3.1 Resultados Obtidos e Revalidação
+
+Ao revalidar a execução do benchmark num ambiente purgado, foi constatado um **Speedup médio em torno de 1.03x**, ou seja, quase neutro. 
+
+Isso se deve a dois fatores técnicos primordiais do PostgreSQL:
+1. **Índices Implícitos (UNIQUE):** As consultas que dependiam das tabelas `TB_EMISSAO_CERTIFICADO` e `TB_REGISTRO_FEEDBACK` já utilizavam índices B-Tree criados automaticamente pelas constraints `UNIQUE(ID_INSCRICAO)`. Adicionar índices manuais (`IDX_CERTIFICADO_INSCRICAO`) provou-se redundante (eles foram desativados no plano). O script de Baseline, ao dropar os manuais, continuava usufruindo dos implícitos.
+2. **Data Volume e Buffer Pool:** O volume atual da massa de dados sintética (11.000 inscrições e 5.500 participantes) cabe em poucos blocos no Buffer Pool. O *Query Planner* do PostgreSQL é agressivo em fazer *Sequential Scans* quando percebe que a tabela está inteira na memória RAM, optando por ignorar os índices das Foreign Keys porque o custo de varrer as páginas em memória é menor que percorrer a estrutura B-Tree.
+
+Para obter Speedups exponenciais, seria necessário escalar as inserções de teste na casa de centenas de milhares de linhas para punir os Sequential Scans.
