@@ -800,6 +800,17 @@ FROM generate_series(1, 5500) s(i), LATERAL (SELECT i AS ID) p
 CROSS JOIN generate_series(1, 2) g(j)
 ON CONFLICT DO NOTHING;
 
+-- Insert additional enrollments for "super-participants" (>5 enrollments)
+INSERT INTO RL_INSCRICAO_HISTORICO (ID_PARTICIPANTE, ID_ATIVIDADE, ST_PRESENCA, VL_NOTA_AVALIACAO)
+SELECT 
+    p.id, 
+    (random() * 99)::int + 1, 
+    'PRESENTE',
+    (random() * 10)::decimal(4,2)
+FROM generate_series(1, 50) s(i), LATERAL (SELECT i AS ID) p
+CROSS JOIN generate_series(1, 6) g(j)
+ON CONFLICT DO NOTHING;
+
 -- 4. Other Relationships
 
 -- RL_ALOCACAO_INSTRUTOR: ~200 records
@@ -1218,7 +1229,7 @@ WHERE p.ID_PARTICIPANTE IN (
     SELECT i2.ID_PARTICIPANTE
     FROM RL_INSCRICAO_HISTORICO i2
     GROUP BY i2.ID_PARTICIPANTE
-    HAVING COUNT(i2.ID_INSCRICAO) > 2
+    HAVING COUNT(i2.ID_INSCRICAO) > 5
 )
 GROUP BY p.ID_PARTICIPANTE, p.DS_NOME_PARTICIPANTE;
 
