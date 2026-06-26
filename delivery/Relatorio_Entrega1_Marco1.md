@@ -64,7 +64,7 @@ O banco de dados modela as seguintes entidades e seus relacionamentos:
 
 O diagrama entidade-relacionamento foi elaborado no BrModeloWeb seguindo estritamente a **NotaÃ§Ã£o de Peter Chen** (retÃ¢ngulos para entidades, losangos para relacionamentos, elipses para atributos). A imagem abaixo apresenta o modelo conceitual completo:
 
-![Modelo Conceitual - NotaÃ§Ã£o de Peter Chen](../Conceptual%20model%20-%20BRMW.pdf)
+![Modelo Conceitual - NotaÃ§Ã£o de Peter Chen](Diagrama_Conceitual.pdf)
 
 *Figura 1: Diagrama entidade-relacionamento no BrModeloWeb (notaÃ§Ã£o de Peter Chen)*
 
@@ -108,7 +108,7 @@ A nomenclatura segue a Metodologia de AdministraÃ§Ã£o de Dados (MAD/IBAMA):
 
 ### 4.1 EstratÃ©gia de TraduÃ§Ã£o MER â†’ Relacional
 
-O script DDL (`schema/ddl_initialization.sql`) materializa a modelagem lÃ³gica em PostgreSQL:
+O script DDL (`final_script.sql`) materializa a modelagem lÃ³gica em PostgreSQL:
 
 1. **CriaÃ§Ã£o das tabelas base** (`TB_*`): Cada entidade do MER se torna uma tabela. As PKs sÃ£o implementadas com `SERIAL` para geraÃ§Ã£o automÃ¡tica de identificadores.
 2. **CriaÃ§Ã£o das tabelas associativas** (`RL_*`): Relacionamentos N:N do MER sÃ£o transformados em tabelas separadas com PK composta. Exemplo: `RL_ALOCACAO_INSTRUTOR` com PK `(ID_ATIVIDADE, ID_INSTRUTOR)`.
@@ -118,7 +118,7 @@ O script DDL (`schema/ddl_initialization.sql`) materializa a modelagem lÃ³gica
 
 ### 4.2 Script de InicializaÃ§Ã£o
 
-O arquivo `schema/ddl_initialization.sql` contÃ©m toda a DDL necessÃ¡ria para recriar o banco. Exemplo da estrutura:
+O arquivo `final_script.sql` contÃ©m toda a DDL necessÃ¡ria para recriar o banco. Exemplo da estrutura:
 
 ```sql
 CREATE TABLE TB_ATIVIDADE (
@@ -137,7 +137,7 @@ CREATE TABLE TB_ATIVIDADE (
 
 ### 5.1 EstratÃ©gia de PopulaÃ§Ã£o
 
-O banco foi populado usando funÃ§Ãµes sintÃ©ticas nativas do PostgreSQL (`generate_series()` e `random()`) no script `schema/dml_population.sql`:
+O banco foi populado usando funÃ§Ãµes sintÃ©ticas nativas do PostgreSQL (`generate_series()` e `random()`) no script `final_script.sql`:
 
 | Tabela | Registros | EstratÃ©gia |
 |--------|-----------|------------|
@@ -197,13 +197,13 @@ Foram elaboradas **30 consultas SQL** (10 intermediÃ¡rias + 20 avanÃ§adas), 
 | A19 | RF5 | Parceiros que patrocinam mais de um projeto | Subconsulta, JOIN, GROUP BY, COUNT |
 | A20 | RF6 | DiferenÃ§a da nota do participante para a mÃ©dia | Subconsulta, JOIN, WINDOW |
 
-Todas as consultas estÃ£o implementadas em `schema/intermediate_queries.sql` e `schema/advanced_queries.sql`, com comentÃ¡rios explicitando o requisito atendido.
+Todas as consultas estÃ£o implementadas em `final_script.sql` e `final_script.sql`, com comentÃ¡rios explicitando o requisito atendido.
 
 ## 6. Plano de IndexaÃ§Ã£o e Desempenho
 
 ### 6.1 Plano de IndexaÃ§Ã£o
 
-Foram criados 7 Ã­ndices no script `schema/indexing_plan.sql` para otimizar JOINs e filtros frequentes. TrÃªs Ã­ndices adicionais foram planejados mas dispensados por redundÃ¢ncia com constraints UNIQUE (`TB_EMISSAO_CERTIFICADO(ID_INSCRICAO)` e `TB_REGISTRO_FEEDBACK(ID_INSCRICAO)` jÃ¡ possuem Ã­ndices automÃ¡ticos, assim como `tabela_participante(DS_EMAIL_CONTATO)`).
+Foram criados 7 Ã­ndices no script `final_script.sql` para otimizar JOINs e filtros frequentes. TrÃªs Ã­ndices adicionais foram planejados mas dispensados por redundÃ¢ncia com constraints UNIQUE (`TB_EMISSAO_CERTIFICADO(ID_INSCRICAO)` e `TB_REGISTRO_FEEDBACK(ID_INSCRICAO)` jÃ¡ possuem Ã­ndices automÃ¡ticos, assim como `tabela_participante(DS_EMAIL_CONTATO)`).
 
 **Ãndices para chaves estrangeiras** (aceleram JOINs):
 - `IDX_PROJETO_COORDENADOR` ON `tabela_projeto_extensao(ID_INSTR_COORDENADOR)`
@@ -220,7 +220,7 @@ Foram criados 7 Ã­ndices no script `schema/indexing_plan.sql` para otimizar JO
 
 ### 6.2 Metodologia de Benchmark
 
-O script `schema/benchmark.sql` implementa a avaliaÃ§Ã£o de desempenho seguindo o barema:
+O script `benchmark.sql` implementa a avaliaÃ§Ã£o de desempenho seguindo o barema:
 1. Remove todos os Ã­ndices nÃ£o-PK (baseline).
 2. Executa cada uma das 30 consultas por **20 rodadas**, registrando o tempo via `clock_timestamp()`.
 3. Recria os 7 Ã­ndices do plano de indexaÃ§Ã£o.
@@ -242,7 +242,7 @@ Os resultados foram coletados executando-se o script `benchmark.sql` em uma inst
 | A20 | 11,56 | 0,65 | 11,63 | 1,41 | 0,99 |
 *(Amostra das consultas mais custosas de acordo com a revalidaÃ§Ã£o do banco)*
 
-**AnÃ¡lise Revalidada:** Observa-se um speedup mÃ©dio de **~1.03x** para as consultas em geral. Os ganhos exponenciais reportados anteriormente (como 9,06x) eram fictÃ­cios e metodologicamente falhos. Duas razÃµes tÃ©cnicas explicam o comportamento real:
+**AnÃ¡lise de Desempenho:** Observa-se um speedup mÃ©dio de **~1.03x** para as consultas em geral. Duas razÃµes tÃ©cnicas explicam os ganhos marginais ao invÃ©s de exponenciais:
 1. **RedundÃ¢ncia de Ãndices:** Tabelas como `TB_EMISSAO_CERTIFICADO` jÃ¡ possuÃ­am Ã­ndices B-Tree subjacentes devido Ã  restriÃ§Ã£o `UNIQUE(ID_INSCRICAO)`. O cenÃ¡rio "baseline" continuava usando esses Ã­ndices implÃ­citos.
 2. **Data Volume:** 11.000 registros cabem perfeitamente no *Buffer Pool* do PostgreSQL. Para dados pequenos, o *Query Planner* escolhe *Sequential Scans* intencionalmente por ser mais rÃ¡pido em memÃ³ria do que percorrer Ã¡rvores. O plano de indexaÃ§Ã£o corrigido desativou os Ã­ndices redundantes.
 
@@ -287,7 +287,7 @@ Para reproduzir o ambiente e a entrega, execute os scripts na seguinte ordem em 
 
 2. Para gerar o relatÃ³rio de desempenho com speedup, execute:
    ```bash
-   psql -U seu_usuario -d banco_extensao_ic -f schema/benchmark.sql
+   psql -U seu_usuario -d banco_extensao_ic -f benchmark.sql
    ```
    O script criarÃ¡ a tabela `benchmark_results`, executarÃ¡ cada consulta 20 vezes sem Ã­ndices e 20 vezes com Ã­ndices, e exibirÃ¡ a tabela comparativa com mÃ©dias, desvios padrÃ£o e speedup.
 
