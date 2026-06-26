@@ -2,10 +2,10 @@
 -- 10 Materialized Views mapped from queries of Marco 1
 
 -- ============================================================================
--- Dashboard 1: 4 Gráficos Analíticos Estratégicos (4 Consultas Avançadas)
+-- Dashboard 1: 4 GrÃ¡ficos AnalÃ­ticos EstratÃ©gicos (4 Consultas AvanÃ§adas)
 -- ============================================================================
 
--- 1. Gráfico Estratégico 1: Ranking Global de Participantes por Notas Médias
+-- 1. GrÃ¡fico EstratÃ©gico 1: Ranking Global de Participantes por Notas MÃ©dias
 -- Baseado em: Advanced Query 1
 CREATE MATERIALIZED VIEW MV_RANKING_PARTICIPANTES AS
 SELECT
@@ -17,20 +17,20 @@ FROM (
         p.ID_PARTICIPANTE,
         p.DS_NOME_PARTICIPANTE,
         AVG(i.VL_NOTA_AVALIACAO) AS MEDIA_GLOBAL
-    FROM TB_PARTICIPANTE p
+    FROM tabela_participante p
     JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
     JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
     GROUP BY p.ID_PARTICIPANTE, p.DS_NOME_PARTICIPANTE
 ) sub
 WITH DATA;
 
--- 2. Gráfico Estratégico 2: Top 3 Projetos com Mais Certificados Emitidos
+-- 2. GrÃ¡fico EstratÃ©gico 2: Top 3 Projetos com Mais Certificados Emitidos
 -- Baseado em: Advanced Query 2
 CREATE MATERIALIZED VIEW MV_TOP_PROJETOS_CERTIFICADOS AS
 SELECT DS_NOME_PROJETO, total_certificados
 FROM (
     SELECT proj.DS_NOME_PROJETO, COUNT(cert.ID_CERTIFICADO) AS TOTAL_CERTIFICADOS
-    FROM TB_PROJETO_EXTENSAO proj
+    FROM tabela_projeto_extensao proj
     JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
     JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
     JOIN TB_EMISSAO_CERTIFICADO cert ON i.ID_INSCRICAO = cert.ID_INSCRICAO
@@ -40,7 +40,7 @@ ORDER BY total_certificados DESC
 LIMIT 3
 WITH DATA;
 
--- 3. Gráfico Estratégico 3: Crescimento Mensal (Acumulado) de Projetos e Inscrições
+-- 3. GrÃ¡fico EstratÃ©gico 3: Crescimento Mensal (Acumulado) de Projetos e InscriÃ§Ãµes
 -- Baseado em: Advanced Query 10
 CREATE MATERIALIZED VIEW MV_CRESCIMENTO_MENSAL_PROJETOS AS
 SELECT
@@ -49,13 +49,13 @@ SELECT
     COUNT(DISTINCT i.ID_INSCRICAO) AS TOTAL_INSCRICOES,
     SUM(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)) AS PROJETOS_ACUMULADOS,
     COUNT(DISTINCT proj.ID_PROJETO) - COALESCE(LAG(COUNT(DISTINCT proj.ID_PROJETO)) OVER(ORDER BY DATE_TRUNC('month', proj.DT_CRIACAO)), 0) AS CRESCIMENTO_MENSAL
-FROM TB_PROJETO_EXTENSAO proj
+FROM tabela_projeto_extensao proj
 JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
 JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
 GROUP BY DATE_TRUNC('month', proj.DT_CRIACAO)
 WITH DATA;
 
--- 4. Gráfico Estratégico 4: Atividades com Participação Acima da Média
+-- 4. GrÃ¡fico EstratÃ©gico 4: Atividades com ParticipaÃ§Ã£o Acima da MÃ©dia
 -- Baseado em: Advanced Query 3
 CREATE MATERIALIZED VIEW MV_ATIVIDADES_ALTA_PARTICIPACAO AS
 WITH AtividadeContagem AS (
@@ -66,36 +66,36 @@ WITH AtividadeContagem AS (
 SELECT a.DS_TITULO_ATIVIDADE, proj.DS_NOME_PROJETO, ac.total_inscritos
 FROM TB_ATIVIDADE a
 JOIN AtividadeContagem ac ON a.ID_ATIVIDADE = ac.ID_ATIVIDADE
-JOIN TB_PROJETO_EXTENSAO proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
+JOIN tabela_projeto_extensao proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
 WHERE ac.total_inscritos > (SELECT AVG(total_inscritos) FROM AtividadeContagem)
 WITH DATA;
 
 
 -- ============================================================================
--- Dashboard 1: 6 Gráficos Analíticos Operacionais (2 Avançadas + 4 Intermediárias)
+-- Dashboard 1: 6 GrÃ¡ficos AnalÃ­ticos Operacionais (2 AvanÃ§adas + 4 IntermediÃ¡rias)
 -- ============================================================================
 
--- 5. Gráfico Operacional 1 (Avançada): Projetos com Quantidade de Alunos Acima da Média
+-- 5. GrÃ¡fico Operacional 1 (AvanÃ§ada): Projetos com Quantidade de Alunos Acima da MÃ©dia
 -- Baseado em: Advanced Query 8
 CREATE MATERIALIZED VIEW MV_PROJETOS_ACIMA_MEDIA_ALUNOS AS
 SELECT proj.DS_NOME_PROJETO, COUNT(p.ID_PARTICIPANTE) AS TOTAL_ALUNOS
-FROM TB_PROJETO_EXTENSAO proj
+FROM tabela_projeto_extensao proj
 JOIN RL_MEMBRO_PROJETO mem ON proj.ID_PROJETO = mem.ID_PROJETO
-JOIN TB_PARTICIPANTE p ON mem.ID_PARTICIPANTE = p.ID_PARTICIPANTE
+JOIN tabela_participante p ON mem.ID_PARTICIPANTE = p.ID_PARTICIPANTE
 WHERE p.TP_VINCULO_INST = 'ALUNO'
 GROUP BY proj.DS_NOME_PROJETO
 HAVING COUNT(p.ID_PARTICIPANTE) > (
     SELECT AVG(alunos_count) FROM (
         SELECT COUNT(p2.ID_PARTICIPANTE) AS ALUNOS_COUNT
         FROM RL_MEMBRO_PROJETO mem2
-        JOIN TB_PARTICIPANTE p2 ON mem2.ID_PARTICIPANTE = p2.ID_PARTICIPANTE
+        JOIN tabela_participante p2 ON mem2.ID_PARTICIPANTE = p2.ID_PARTICIPANTE
         WHERE p2.TP_VINCULO_INST = 'ALUNO'
         GROUP BY mem2.ID_PROJETO
     ) sub
 )
 WITH DATA;
 
--- 6. Gráfico Operacional 2 (Avançada): Parceiros Patrocinadores Múltiplos e Total Aportado
+-- 6. GrÃ¡fico Operacional 2 (AvanÃ§ada): Parceiros Patrocinadores MÃºltiplos e Total Aportado
 -- Baseado em: Advanced Query 19
 CREATE MATERIALIZED VIEW MV_PARCEIROS_MULTIPLOS_PROJETOS AS
 SELECT p.DS_NOME_ORGANIZACAO, 
@@ -107,19 +107,19 @@ GROUP BY p.ID_PARCEIRO, p.DS_NOME_ORGANIZACAO
 HAVING COUNT(DISTINCT a.ID_PROJ_VINCULADO) > 1
 WITH DATA;
 
--- 7. Gráfico Operacional 3 (Intermediária): Total de Atividades por Projeto (com Coordenador)
+-- 7. GrÃ¡fico Operacional 3 (IntermediÃ¡ria): Total de Atividades por Projeto (com Coordenador)
 -- Baseado em: Intermediate Query 2
 CREATE MATERIALIZED VIEW MV_TOTAL_ATIVIDADES_PROJETO AS
 SELECT proj.DS_NOME_PROJETO,
        inst.DS_NOME_INSTRUTOR AS COORDENADOR,
        COUNT(a.ID_ATIVIDADE) AS TOTAL_ATIVIDADES
-FROM TB_PROJETO_EXTENSAO proj
+FROM tabela_projeto_extensao proj
 LEFT JOIN TB_ATIVIDADE a ON proj.ID_PROJETO = a.ID_PROJ_VINCULADO
 JOIN TB_INSTRUTOR inst ON proj.ID_INSTR_COORDENADOR = inst.ID_INSTRUTOR
 GROUP BY proj.DS_NOME_PROJETO, inst.DS_NOME_INSTRUTOR
 WITH DATA;
 
--- 8. Gráfico Operacional 4 (Intermediária): Carga Horária Total por Instrutor
+-- 8. GrÃ¡fico Operacional 4 (IntermediÃ¡ria): Carga HorÃ¡ria Total por Instrutor
 -- Baseado em: Intermediate Query 3
 CREATE MATERIALIZED VIEW MV_CARGA_HORARIA_INSTRUTORES AS
 SELECT inst.DS_NOME_INSTRUTOR,
@@ -131,7 +131,7 @@ JOIN TB_ATIVIDADE a ON alloc.ID_ATIVIDADE = a.ID_ATIVIDADE
 GROUP BY inst.DS_NOME_INSTRUTOR
 WITH DATA;
 
--- 9. Gráfico Operacional 5 (Intermediária): Avaliação Média por Atividade
+-- 9. GrÃ¡fico Operacional 5 (IntermediÃ¡ria): AvaliaÃ§Ã£o MÃ©dia por Atividade
 -- Baseado em: Intermediate Query 6
 CREATE MATERIALIZED VIEW MV_AVALIACAO_MEDIA_ATIVIDADE AS
 SELECT a.DS_TITULO_ATIVIDADE,
@@ -140,18 +140,18 @@ SELECT a.DS_TITULO_ATIVIDADE,
        COUNT(i.ID_INSCRICAO) AS TOTAL_INSCRICOES
 FROM TB_ATIVIDADE a
 JOIN RL_INSCRICAO_HISTORICO i ON a.ID_ATIVIDADE = i.ID_ATIVIDADE
-JOIN TB_PROJETO_EXTENSAO proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
+JOIN tabela_projeto_extensao proj ON a.ID_PROJ_VINCULADO = proj.ID_PROJETO
 GROUP BY a.DS_TITULO_ATIVIDADE, proj.DS_NOME_PROJETO
 HAVING COUNT(i.ID_INSCRICAO) > 5
 WITH DATA;
 
--- 10. Gráfico Operacional 6 (Intermediária): Participantes Mais Ativos (Mais de 2 presenças)
+-- 10. GrÃ¡fico Operacional 6 (IntermediÃ¡ria): Participantes Mais Ativos (Mais de 2 presenÃ§as)
 -- Baseado em: Intermediate Query 5
 CREATE MATERIALIZED VIEW MV_PARTICIPANTES_MAIS_ATIVOS AS
 SELECT p.DS_NOME_PARTICIPANTE,
        COUNT(a.ID_ATIVIDADE) AS TOTAL_PRESENCAS,
        STRING_AGG(a.DS_TITULO_ATIVIDADE, ', ') AS NOMES_ATIVIDADES
-FROM TB_PARTICIPANTE p
+FROM tabela_participante p
 JOIN RL_INSCRICAO_HISTORICO i ON p.ID_PARTICIPANTE = i.ID_PARTICIPANTE
 JOIN TB_ATIVIDADE a ON i.ID_ATIVIDADE = a.ID_ATIVIDADE
 WHERE i.ST_PRESENCA = 'PRESENTE'
